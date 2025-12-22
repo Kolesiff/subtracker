@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../../core/app_export.dart';
+import '../../../theme/urgency_colors.dart';
 import '../../../widgets/custom_icon_widget.dart';
 
 /// Urgency summary widget showing trial statistics
@@ -121,7 +122,7 @@ class UrgencySummaryWidget extends StatelessWidget {
                   context,
                   'Warning',
                   stats['warning']!,
-                  const Color(0xFFF39C12),
+                  UrgencyColors.warning(context),
                   Icons.access_time_rounded,
                 ),
               ),
@@ -131,7 +132,7 @@ class UrgencySummaryWidget extends StatelessWidget {
                   context,
                   'Safe',
                   stats['safe']!,
-                  const Color(0xFF2ECC71),
+                  UrgencyColors.safe(context),
                   Icons.check_circle_rounded,
                 ),
               ),
@@ -152,40 +153,43 @@ class UrgencySummaryWidget extends StatelessWidget {
   ) {
     final theme = Theme.of(context);
 
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 1.5.h),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        children: [
-          CustomIconWidget(
-            iconName: icon
-                .toString()
-                .split('.')
-                .last
-                .replaceAll('IconData(U+', '')
-                .replaceAll(')', ''),
-            size: 24,
-            color: color,
-          ),
-          SizedBox(height: 0.5.h),
-          Text(
-            '$count',
-            style: theme.textTheme.titleLarge?.copyWith(
+    return Semantics(
+      label: '$count $label trial${count != 1 ? 's' : ''}',
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 1.5.h),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          children: [
+            CustomIconWidget(
+              iconName: icon
+                  .toString()
+                  .split('.')
+                  .last
+                  .replaceAll('IconData(U+', '')
+                  .replaceAll(')', ''),
+              size: 24,
               color: color,
-              fontWeight: FontWeight.w700,
             ),
-          ),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            SizedBox(height: 0.5.h),
+            Text(
+              '$count',
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-        ],
+            Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

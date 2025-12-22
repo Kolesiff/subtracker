@@ -17,7 +17,7 @@ class CustomErrorWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -34,21 +34,16 @@ class CustomErrorWidget extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   "Something went wrong",
-                  style: const TextStyle(
-                    fontSize: 24,
+                  style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF262626),
                   ),
                 ),
                 const SizedBox(height: 4),
-                SizedBox(
-                  child: const Text(
-                    'We encountered an unexpected error while processing your request.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF525252), // neutral-600
-                    ),
+                Text(
+                  'We encountered an unexpected error while processing your request.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 24),

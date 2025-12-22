@@ -3,6 +3,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../../core/app_export.dart';
+import '../../../theme/urgency_colors.dart';
 
 /// Individual trial card widget with swipe actions
 class TrialCardWidget extends StatelessWidget {
@@ -25,16 +26,7 @@ class TrialCardWidget extends StatelessWidget {
 
   /// Get urgency color based on trial end date
   Color _getUrgencyColor(BuildContext context, String urgencyLevel) {
-    final theme = Theme.of(context);
-    switch (urgencyLevel) {
-      case 'critical':
-        return theme.colorScheme.error;
-      case 'warning':
-        return const Color(0xFFF39C12);
-      case 'safe':
-      default:
-        return const Color(0xFF2ECC71);
-    }
+    return UrgencyColors.getColor(context, urgencyLevel);
   }
 
   /// Calculate countdown text
@@ -209,31 +201,34 @@ class TrialCardWidget extends StatelessWidget {
                 ),
 
                 // Countdown timer with urgency indicator
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
-                  decoration: BoxDecoration(
-                    color: urgencyColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: urgencyColor.withValues(alpha: 0.3),
+                Semantics(
+                  label: 'Time remaining: ${_getCountdownText()}, ${trial["urgencyLevel"]} urgency',
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
+                    decoration: BoxDecoration(
+                      color: urgencyColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: urgencyColor.withValues(alpha: 0.3),
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    children: [
-                      CustomIconWidget(
-                        iconName: 'timer',
-                        size: 20,
-                        color: urgencyColor,
-                      ),
-                      SizedBox(height: 0.5.h),
-                      Text(
-                        _getCountdownText(),
-                        style: theme.textTheme.labelMedium?.copyWith(
+                    child: Column(
+                      children: [
+                        CustomIconWidget(
+                          iconName: 'timer',
+                          size: 20,
                           color: urgencyColor,
-                          fontWeight: FontWeight.w700,
                         ),
-                      ),
-                    ],
+                        SizedBox(height: 0.5.h),
+                        Text(
+                          _getCountdownText(),
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: urgencyColor,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

@@ -124,24 +124,39 @@ AppTheme.spacingMedium  // Static spacing constants
 Tests are in `test/` directory mirroring `lib/` structure:
 - `test/data/models/` - Model unit tests (35 tests)
 - `test/data/repositories/` - Repository tests (26 tests)
-- `test/presentation/` - Widget tests for screens (16 tests)
+- `test/presentation/` - Widget tests for screens and ViewModels (49 tests)
 - `test/widgets/` - Widget tests for components (30 tests)
 - `test/helpers/` - Shared test utilities
+- `integration_test/` - Integration tests for user flows (4 tests)
 
-**Total: 106 tests** (105 passing, 1 timing-based test may fail due to date calculations)
+**Total: 139 tests** (all passing)
 
 Run specific test file:
 ```bash
 flutter test test/data/models/subscription_test.dart
 ```
 
-## Known Issues (Phase 4 Backlog)
+Run integration tests (requires device/emulator):
+```bash
+flutter test integration_test/
+```
 
-These issues are documented in `.claude/plans/subtracker-polish-plan.md`:
+## Known Accessibility Limitation
 
-1. **Hardcoded colors** - Some widgets use hardcoded hex colors instead of AppTheme references
-   - `lib/presentation/trial_tracker/widgets/trial_card_widget.dart`
-   - `lib/presentation/trial_tracker/widgets/urgency_summary_widget.dart`
-   - `lib/widgets/custom_error_widget.dart`
-   - Consider creating `lib/theme/urgency_colors.dart` utility for theme-aware colors
-2. **Sizer misuse** - Some files use `.h`/`.w` where fixed pixels were intended (deferred to Phase 4)
+**TextScaler fixed at 1.0:** The app disables system text scaling in `lib/main.dart` to ensure consistent UI sizing across devices. This is a deliberate design decision marked as "CRITICAL: DO NOT REMOVE" but limits accessibility for users who rely on larger system text. If accessibility compliance is required, this constraint should be revisited with careful UI testing.
+
+## Theme Utilities
+
+**UrgencyColors** (`lib/theme/urgency_colors.dart`): Theme-aware urgency color utility that returns appropriate colors (critical/warning/safe) based on current theme brightness. Use instead of hardcoding hex colors:
+
+```dart
+UrgencyColors.critical(context)  // Error color for critical urgency
+UrgencyColors.warning(context)   // Warning color for warning urgency
+UrgencyColors.safe(context)      // Success color for safe urgency
+```
+
+## Remaining Backlog
+
+1. **Sizer percentage usage** - Some files use `.h`/`.w` for spacing. These are intentional for responsive design but should be reviewed for consistency.
+2. **Pre-existing lint warnings** - 24 lint issues exist (unused variables, deprecated API usage). Run `flutter analyze` to see details.
+3. **Golden tests** - Not implemented. Consider adding visual regression tests for key screens if needed.
