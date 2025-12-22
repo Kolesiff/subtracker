@@ -612,7 +612,20 @@ class _TrialTrackerState extends State<TrialTracker> with SingleTickerProviderSt
       bottomNavigationBar: CustomBottomBar(
         currentItem: CustomBottomBarItem.trials,
         onItemSelected: (item) {
-          // Navigation handled by CustomBottomBar
+          switch (item) {
+            case CustomBottomBarItem.dashboard:
+              Navigator.pushReplacementNamed(context, '/subscription-dashboard');
+              break;
+            case CustomBottomBarItem.trials:
+              // Already on trials, no action needed
+              break;
+            case CustomBottomBarItem.add:
+              Navigator.pushNamed(context, '/add-subscription');
+              break;
+            case CustomBottomBarItem.analytics:
+              Navigator.pushReplacementNamed(context, '/analytics');
+              break;
+          }
         },
       ),
     );

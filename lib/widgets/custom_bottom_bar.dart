@@ -77,29 +77,8 @@ class _CustomBottomBarState extends State<CustomBottomBar>
     });
 
     widget.onItemSelected(item);
-    _navigateToRoute(item);
-  }
-
-  /// Navigate to the corresponding route based on selected item
-  void _navigateToRoute(CustomBottomBarItem item) {
-    String route;
-    switch (item) {
-      case CustomBottomBarItem.dashboard:
-        route = '/subscription-dashboard';
-        break;
-      case CustomBottomBarItem.trials:
-        route = '/trial-tracker';
-        break;
-      case CustomBottomBarItem.add:
-        route = '/add-subscription';
-        break;
-      case CustomBottomBarItem.analytics:
-        // Using subscription-detail as analytics placeholder
-        route = '/subscription-detail';
-        break;
-    }
-
-    Navigator.pushNamed(context, route);
+    // Navigation is handled by the parent widget via onItemSelected callback
+    // DO NOT call Navigator directly here - it causes double navigation
   }
 
   /// Get icon for navigation item
@@ -145,33 +124,32 @@ class _CustomBottomBarState extends State<CustomBottomBar>
     final icon = _getIcon(item, isSelected);
     final label = _getLabel(item);
 
-    // Special styling for Add button
+    // Special styling for Add button - wrapped in Expanded like other items
     if (isAddButton) {
-      return ScaleTransition(
-        scale: _lastTappedItem == item
-            ? _scaleAnimation
-            : const AlwaysStoppedAnimation(1.0),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => _handleItemTap(item),
-            customBorder: const CircleBorder(),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      return Expanded(
+        child: ScaleTransition(
+          scale: _lastTappedItem == item
+              ? _scaleAnimation
+              : const AlwaysStoppedAnimation(1.0),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _handleItemTap(item),
+              customBorder: const CircleBorder(),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
                       color: colorScheme.tertiary.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(icon, size: 28, color: colorScheme.tertiary),
+                    child: Icon(icon, size: 22, color: colorScheme.tertiary),
                   ),
                   if (widget.showLabels) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       label,
                       style: theme.textTheme.labelSmall?.copyWith(
@@ -179,6 +157,7 @@ class _CustomBottomBarState extends State<CustomBottomBar>
                         fontWeight: isSelected
                             ? FontWeight.w600
                             : FontWeight.w400,
+                        fontSize: 10,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -205,29 +184,27 @@ class _CustomBottomBarState extends State<CustomBottomBar>
             customBorder: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: isSelected ? 28 : 24, color: color),
-                  if (widget.showLabels) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      label,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: color,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: isSelected ? 26 : 24, color: color),
+                if (widget.showLabels) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    label,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: color,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                      fontSize: 10,
                     ),
-                  ],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
-              ),
+              ],
             ),
           ),
         ),

@@ -6,6 +6,7 @@ import '../presentation/subscription_detail/subscription_detail.dart';
 import '../presentation/onboarding_flow/onboarding_flow.dart';
 import '../presentation/add_subscription/add_subscription.dart';
 import '../presentation/login_screen/login_screen.dart';
+import '../presentation/analytics/analytics_screen.dart';
 
 class AppRoutes {
   // TODO: Add your routes here
@@ -17,6 +18,7 @@ class AppRoutes {
   static const String onboardingFlow = '/onboarding-flow';
   static const String addSubscription = '/add-subscription';
   static const String loginScreen = '/login-screen';
+  static const String analytics = '/analytics';
 
   static Map<String, WidgetBuilder> routes = {
     initial: (context) => const SplashScreen(),
@@ -27,6 +29,6 @@ class AppRoutes {
     onboardingFlow: (context) => const OnboardingFlow(),
     addSubscription: (context) => const AddSubscription(),
     loginScreen: (context) => const LoginScreen(),
-    // TODO: Add your other routes here
+    analytics: (context) => const AnalyticsScreen(),
   };
 }

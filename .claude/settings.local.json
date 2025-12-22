@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter config:*)",
+      "Bash(tree:*)",
+      "Skill(flutter-development)",
+      "Bash(flutter pub get:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(flutter test:*)",
+      "Bash(claude mcp list:*)",
+      "Bash(where npx:*)",
+      "Bash(claude mcp get:*)",
+      "Bash(tr:*)",
+      "Bash(\"/c/Program Files/nodejs/node.exe\" --version)",
+      "Bash(/f/node.exe:*)",
+      "Bash(/f/npx.cmd --version)",
+      "Bash(where:*)",
+      "Bash(flutter run:*)",
+      "Bash(flutter --version:*)"
+    ]
+  }
+}

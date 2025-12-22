@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
 import '../../widgets/custom_icon_widget.dart';
@@ -200,7 +199,7 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ),
                     ),
-                    SizedBox(height: 24.h),
+                    const SizedBox(height: 24),
 
                     // App name
                     FadeTransition(
@@ -214,7 +213,7 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ),
                     ),
-                    SizedBox(height: 8.h),
+                    const SizedBox(height: 8),
 
                     // Tagline
                     FadeTransition(
@@ -227,7 +226,7 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ),
                     ),
-                    SizedBox(height: 48.h),
+                    const SizedBox(height: 48),
 
                     // Loading indicator
                     if (_isInitializing)

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 
-import '../core/app_export.dart';
-import '../widgets/custom_error_widget.dart';
+import 'core/app_export.dart';
+import 'data/providers/app_providers.dart';
+import 'widgets/custom_error_widget.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,9 +37,10 @@ void main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Sizer(
-      builder: (context, orientation, screenType) {
-        return MaterialApp(
+    return AppProviders(
+      child: Sizer(
+        builder: (context, orientation, screenType) {
+          return MaterialApp(
           title: 'subtracker',
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
@@ -57,7 +59,8 @@ class MyApp extends StatelessWidget {
           routes: AppRoutes.routes,
           initialRoute: AppRoutes.initial,
         );
-      },
+        },
+      ),
     );
   }
 }

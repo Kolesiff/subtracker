@@ -437,10 +437,16 @@ class _AddSubscriptionState extends State<AddSubscription> {
     }
   }
 
+  /// Check if form has unsaved changes
+  bool _hasUnsavedChanges() {
+    return _serviceNameController.text.isNotEmpty ||
+        _costController.text.isNotEmpty ||
+        _notesController.text.isNotEmpty;
+  }
+
   /// Handle cancel action
   void _handleCancel() {
-    if (_serviceNameController.text.isNotEmpty ||
-        _costController.text.isNotEmpty) {
+    if (_hasUnsavedChanges()) {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -479,7 +485,14 @@ class _AddSubscriptionState extends State<AddSubscription> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
+    return PopScope(
+      canPop: !_hasUnsavedChanges(),
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (!didPop) {
+          _handleCancel();
+        }
+      },
+      child: Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
@@ -586,6 +599,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
           ),
         ),
       ),
+    ),
     );
   }
 }

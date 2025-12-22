@@ -234,24 +234,21 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         : SystemUiOverlayStyle.dark;
 
     if (style == CustomAppBarStyle.large) {
-      return SliverAppBar(
-        expandedHeight:
+      // Use regular AppBar with toolbarHeight for large style
+      // SliverAppBar cannot be used in Scaffold.appBar context
+      return AppBar(
+        toolbarHeight:
             preferredSize.height - (bottom?.preferredSize.height ?? 0),
-        floating: false,
-        pinned: true,
         elevation: elevation,
         backgroundColor: effectiveBackgroundColor,
         foregroundColor: foregroundColor ?? theme.appBarTheme.foregroundColor,
         systemOverlayStyle: overlayStyle,
         leading: _buildLeading(context),
         automaticallyImplyLeading: false,
+        centerTitle: centerTitle,
+        title: _buildTitle(context),
         actions: _buildActions(context),
         bottom: bottom,
-        flexibleSpace: FlexibleSpaceBar(
-          title: _buildTitle(context),
-          titlePadding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-          centerTitle: centerTitle,
-        ),
       );
     }
 
