@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../repositories/repositories.dart';
 import '../../presentation/subscription_dashboard/viewmodel/dashboard_viewmodel.dart';
 import '../../presentation/analytics/viewmodel/analytics_viewmodel.dart';
+import '../../presentation/auth/viewmodel/auth_viewmodel.dart';
 
 /// Creates the list of providers for the application
 /// Wraps the app with all necessary dependency injection
@@ -16,12 +17,29 @@ class AppProviders extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // Auth Repository (Supabase implementation)
+        Provider<AuthRepository>(
+          create: (_) => SupabaseAuthRepository(),
+        ),
+
+        // Auth ViewModel
+        ChangeNotifierProxyProvider<AuthRepository, AuthViewModel>(
+          create: (context) => AuthViewModel(
+            repository: context.read<AuthRepository>(),
+          ),
+          update: (context, repository, previous) =>
+              previous ?? AuthViewModel(repository: repository),
+        ),
+
         // Repositories (singleton instances)
         Provider<SubscriptionRepository>(
           create: (_) => MockSubscriptionRepository(),
         ),
         Provider<TrialRepository>(
           create: (_) => MockTrialRepository(),
+        ),
+        Provider<SettingsRepository>(
+          create: (_) => SupabaseSettingsRepository(),
         ),
 
         // ViewModels (with automatic initialization)
@@ -55,6 +73,15 @@ class AppProviders extends StatelessWidget {
 
 /// Extension for easy access to repositories and viewmodels
 extension ContextProviderExtensions on BuildContext {
+  /// Get the auth repository
+  AuthRepository get authRepository => read<AuthRepository>();
+
+  /// Get the auth viewmodel
+  AuthViewModel get authViewModel => read<AuthViewModel>();
+
+  /// Watch the auth viewmodel for changes
+  AuthViewModel watchAuthViewModel() => watch<AuthViewModel>();
+
   /// Get the subscription repository
   SubscriptionRepository get subscriptionRepository =>
       read<SubscriptionRepository>();

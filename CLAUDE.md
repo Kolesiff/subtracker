@@ -36,12 +36,21 @@ lib/
 **Key Files:**
 - `lib/data/models/subscription.dart` - Subscription model with BillingCycle, SubscriptionStatus, SubscriptionCategory enums
 - `lib/data/models/trial.dart` - Trial model with UrgencyLevel, CancellationDifficulty enums
+- `lib/data/models/app_user.dart` - User model with AuthProvider enum (email, google, apple)
+- `lib/data/models/auth_result.dart` - Auth result wrapper with AuthError enum
+- `lib/data/models/user_settings.dart` - User settings model (theme, notifications, currency)
 - `lib/data/repositories/subscription_repository.dart` - Abstract repository interfaces
 - `lib/data/repositories/mock_subscription_repository.dart` - Mock implementations for development
+- `lib/data/repositories/auth_repository.dart` - Abstract auth interface
+- `lib/data/repositories/supabase_auth_repository.dart` - Supabase auth implementation
+- `lib/data/repositories/settings_repository.dart` - Abstract settings interface
+- `lib/data/repositories/supabase_settings_repository.dart` - Supabase settings implementation
 - `lib/data/providers/app_providers.dart` - MultiProvider setup wrapping the app
 - `lib/presentation/subscription_dashboard/viewmodel/dashboard_viewmodel.dart` - Dashboard state management
 - `lib/presentation/analytics/viewmodel/analytics_viewmodel.dart` - Analytics state management
+- `lib/presentation/auth/viewmodel/auth_viewmodel.dart` - Authentication state management
 - `lib/presentation/analytics/analytics_screen.dart` - Analytics dashboard (MVP with cards)
+- `lib/presentation/account_settings/account_settings_screen.dart` - Account settings (placeholder)
 
 **State Management:**
 ```dart
@@ -123,13 +132,13 @@ AppTheme.spacingMedium  // Static spacing constants
 
 Tests are in `test/` directory mirroring `lib/` structure:
 - `test/data/models/` - Model unit tests (35 tests)
-- `test/data/repositories/` - Repository tests (26 tests)
-- `test/presentation/` - Widget tests for screens and ViewModels (49 tests)
+- `test/data/repositories/` - Repository tests (26 + 37 auth = 63 tests)
+- `test/presentation/` - Widget tests for screens and ViewModels (49 + 28 auth + 28 login = 105 tests)
 - `test/widgets/` - Widget tests for components (30 tests)
 - `test/helpers/` - Shared test utilities
 - `integration_test/` - Integration tests for user flows (4 tests)
 
-**Total: 139 tests** (all passing)
+**Total: ~235 tests** (auth tests: 97 total)
 
 Run specific test file:
 ```bash
@@ -155,8 +164,105 @@ UrgencyColors.warning(context)   // Warning color for warning urgency
 UrgencyColors.safe(context)      // Success color for safe urgency
 ```
 
+## Authentication (Supabase)
+
+**Status:** 100% complete. Google OAuth fully working on Android.
+
+**Configuration:**
+- Supabase URL in `.env` file (gitignored)
+- Initialize in `main.dart` with `flutter_dotenv`
+
+**Auth Flow:**
+```
+SplashScreen → checks SharedPreferences('onboarding_complete') + AuthViewModel.isAuthenticated
+    ├─ Not onboarded → OnboardingFlow → LoginScreen
+    ├─ Not authenticated → LoginScreen (Sign In / Sign Up tabs)
+    └─ Authenticated → SubscriptionDashboard
+```
+
+**Using AuthViewModel:**
+```dart
+// Access auth state
+Consumer<AuthViewModel>(
+  builder: (context, viewModel, _) {
+    if (viewModel.isAuthenticated) { ... }
+    if (viewModel.isLoading) { ... }
+    if (viewModel.errorMessage != null) { ... }
+  },
+)
+
+// Auth actions
+context.read<AuthViewModel>().signIn(email: email, password: password);
+context.read<AuthViewModel>().signUp(email: email, password: password);
+context.read<AuthViewModel>().signInWithGoogle();
+context.read<AuthViewModel>().signOut();
+
+// Form validation
+viewModel.validateEmail(email);       // Returns null if valid, error string if invalid
+viewModel.validatePassword(password); // Requires 8+ chars, uppercase, lowercase, number
+```
+
+**Completed Auth Tasks:**
+1. ✅ Add Supabase anon key to `.env`
+2. ✅ Configure Google OAuth deep links in AndroidManifest.xml
+3. ✅ Enable Google provider in Supabase dashboard
+4. ✅ Fix AuthViewModel stream subscription for OAuth callbacks
+5. ✅ Add 97 auth tests (all passing)
+
+**Google OAuth Config:**
+- Package: `com.subtracker.app`
+- SHA-1 (debug): `87:DF:AA:9E:1D:11:F3:38:62:C9:5C:A6:4F:6E:1E:69:B4:47:0F:28`
+- Redirect URI: `https://pfvrusdcaepsagcxzwzi.supabase.co/auth/v1/callback`
+
+## Account Settings (In Progress)
+
+**Status:** Backend complete, UI placeholder needs implementation.
+
+**Navigation:** Bottom nav bar now has Account tab (replaced Add button). FAB handles adding subscriptions.
+
+**Supabase Table:** Run this SQL in Supabase SQL Editor:
+```sql
+CREATE TABLE user_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
+  theme_mode TEXT DEFAULT 'system' CHECK (theme_mode IN ('system', 'light', 'dark')),
+  notifications_enabled BOOLEAN DEFAULT true,
+  currency TEXT DEFAULT 'USD',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own settings" ON user_settings
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own settings" ON user_settings
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own settings" ON user_settings
+  FOR UPDATE USING (auth.uid() = user_id);
+```
+
+**Using SettingsRepository:**
+```dart
+final settings = await context.read<SettingsRepository>().getSettings();
+await context.read<SettingsRepository>().updateThemeMode(ThemeMode.dark);
+await context.read<SettingsRepository>().updateNotificationsEnabled(false);
+await context.read<SettingsRepository>().updateCurrency('EUR');
+```
+
+**Next Steps:**
+1. [ ] Run SQL migration in Supabase dashboard
+2. [ ] Implement AccountSettingsScreen UI (replace placeholder)
+3. [ ] Add AccountSettingsViewModel
+4. [ ] Add theme switching to app (connect to MaterialApp)
+5. [ ] Add settings tests
+
+---
+
 ## Remaining Backlog
 
-1. **Sizer percentage usage** - Some files use `.h`/`.w` for spacing. These are intentional for responsive design but should be reviewed for consistency.
-2. **Pre-existing lint warnings** - 24 lint issues exist (unused variables, deprecated API usage). Run `flutter analyze` to see details.
-3. **Golden tests** - Not implemented. Consider adding visual regression tests for key screens if needed.
+1. **Account Settings UI** - Placeholder at `lib/presentation/account_settings/account_settings_screen.dart` needs full implementation with profile display, theme toggle, notifications, sign out.
+2. **Sizer percentage usage** - Some files use `.h`/`.w` for spacing. These are intentional for responsive design but should be reviewed for consistency.
+3. **Pre-existing lint warnings** - 26 lint issues exist (unused variables, deprecated API usage). Run `flutter analyze` to see details.
+4. **Golden tests** - Not implemented. Consider adding visual regression tests for key screens if needed.
+5. **Auth integration tests** - Add integration tests for full auth flow.

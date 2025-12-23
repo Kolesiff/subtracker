@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/app_export.dart';
+import '../../presentation/auth/viewmodel/auth_viewmodel.dart';
+import '../../routes/app_routes.dart';
 import '../../widgets/custom_icon_widget.dart';
 
 /// Splash screen providing branded app launch experience
@@ -20,6 +24,8 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _fadeAnimation;
   bool _showContinueOffline = false;
   bool _isInitializing = true;
+  bool _isOnboardingComplete = false;
+  bool _isAuthenticated = false;
 
   @override
   void initState() {
@@ -85,10 +91,15 @@ class _SplashScreenState extends State<SplashScreen>
     }
   }
 
-  /// Check if user is authenticated
+  /// Check if user is authenticated and onboarding complete
   Future<void> _checkAuthenticationStatus() async {
-    await Future.delayed(const Duration(milliseconds: 800));
-    // Authentication check logic here
+    // Check onboarding completion from SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    _isOnboardingComplete = prefs.getBool('onboarding_complete') ?? false;
+
+    // Check authentication status from AuthViewModel
+    final authViewModel = context.read<AuthViewModel>();
+    _isAuthenticated = authViewModel.isAuthenticated;
   }
 
   /// Load cached subscription data
@@ -115,11 +126,18 @@ class _SplashScreenState extends State<SplashScreen>
       _isInitializing = false;
     });
 
-    // Determine navigation path
-    final bool isFirstTime = true; // Check actual first-time status
-    final String targetRoute = isFirstTime
-        ? '/onboarding-flow'
-        : '/subscription-dashboard';
+    // Determine navigation path based on onboarding and auth status
+    String targetRoute;
+    if (!_isOnboardingComplete) {
+      // First-time user → Onboarding
+      targetRoute = AppRoutes.onboardingFlow;
+    } else if (!_isAuthenticated) {
+      // Returning user, not logged in → Login
+      targetRoute = AppRoutes.loginScreen;
+    } else {
+      // Authenticated user → Dashboard
+      targetRoute = AppRoutes.subscriptionDashboard;
+    }
 
     // Smooth fade transition to next screen
     Future.delayed(const Duration(milliseconds: 500), () {

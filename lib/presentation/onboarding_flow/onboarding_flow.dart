@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
+import '../../routes/app_routes.dart';
 import './widgets/onboarding_page_widget.dart';
 
 /// Onboarding flow screen that introduces new users to subscription tracking benefits
@@ -92,9 +94,16 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     _completeOnboarding();
   }
 
-  /// Complete onboarding flow and navigate to dashboard
-  void _completeOnboarding() {
-    Navigator.pushReplacementNamed(context, '/subscription-dashboard');
+  /// Complete onboarding flow and navigate to login
+  Future<void> _completeOnboarding() async {
+    // Save onboarding completion status
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboarding_complete', true);
+
+    // Navigate to login screen (not dashboard)
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, AppRoutes.loginScreen);
+    }
   }
 
   @override

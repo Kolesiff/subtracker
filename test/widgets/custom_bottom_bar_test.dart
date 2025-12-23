@@ -91,14 +91,14 @@ void main() {
       await tester.tap(find.byIcon(Icons.analytics_outlined));
       await tester.pumpAndSettle();
 
-      // Tap Add (add circle icon)
-      await tester.tap(find.byIcon(Icons.add_circle_rounded));
+      // Tap Account (person icon)
+      await tester.tap(find.byIcon(Icons.person_outline_rounded));
       await tester.pumpAndSettle();
 
       expect(callbackInvocations, [
         CustomBottomBarItem.trials,
         CustomBottomBarItem.analytics,
-        CustomBottomBarItem.add,
+        CustomBottomBarItem.account,
       ]);
     });
 

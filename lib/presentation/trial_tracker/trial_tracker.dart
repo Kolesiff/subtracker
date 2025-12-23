@@ -619,8 +619,8 @@ class _TrialTrackerState extends State<TrialTracker> with SingleTickerProviderSt
             case CustomBottomBarItem.trials:
               // Already on trials, no action needed
               break;
-            case CustomBottomBarItem.add:
-              Navigator.pushNamed(context, '/add-subscription');
+            case CustomBottomBarItem.account:
+              Navigator.pushReplacementNamed(context, '/account-settings');
               break;
             case CustomBottomBarItem.analytics:
               Navigator.pushReplacementNamed(context, '/analytics');

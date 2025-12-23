@@ -36,8 +36,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       case CustomBottomBarItem.trials:
         Navigator.pushReplacementNamed(context, '/trial-tracker');
         break;
-      case CustomBottomBarItem.add:
-        Navigator.pushNamed(context, '/add-subscription');
+      case CustomBottomBarItem.account:
+        Navigator.pushReplacementNamed(context, '/account-settings');
         break;
       case CustomBottomBarItem.analytics:
         // Already on analytics

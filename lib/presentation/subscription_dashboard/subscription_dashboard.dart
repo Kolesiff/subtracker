@@ -50,8 +50,8 @@ class _SubscriptionDashboardState extends State<SubscriptionDashboard> {
       case CustomBottomBarItem.trials:
         Navigator.pushNamed(context, '/trial-tracker');
         break;
-      case CustomBottomBarItem.add:
-        Navigator.pushNamed(context, '/add-subscription');
+      case CustomBottomBarItem.account:
+        Navigator.pushReplacementNamed(context, '/account-settings');
         break;
       case CustomBottomBarItem.analytics:
         Navigator.pushReplacementNamed(context, '/analytics');

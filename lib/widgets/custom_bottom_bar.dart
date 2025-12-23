@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// Navigation item configuration for the bottom navigation bar
-enum CustomBottomBarItem { dashboard, trials, add, analytics }
+enum CustomBottomBarItem { dashboard, trials, account, analytics }
 
 /// Custom bottom navigation bar widget for subscription tracking app
 /// Implements thumb-optimized bottom placement with native platform conventions
@@ -88,8 +88,8 @@ class _CustomBottomBarState extends State<CustomBottomBar>
         return isSelected ? Icons.dashboard_rounded : Icons.dashboard_outlined;
       case CustomBottomBarItem.trials:
         return isSelected ? Icons.timer_rounded : Icons.timer_outlined;
-      case CustomBottomBarItem.add:
-        return Icons.add_circle_rounded;
+      case CustomBottomBarItem.account:
+        return isSelected ? Icons.person_rounded : Icons.person_outline_rounded;
       case CustomBottomBarItem.analytics:
         return isSelected ? Icons.analytics_rounded : Icons.analytics_outlined;
     }
@@ -102,8 +102,8 @@ class _CustomBottomBarState extends State<CustomBottomBar>
         return 'Dashboard';
       case CustomBottomBarItem.trials:
         return 'Trials';
-      case CustomBottomBarItem.add:
-        return 'Add';
+      case CustomBottomBarItem.account:
+        return 'Account';
       case CustomBottomBarItem.analytics:
         return 'Analytics';
     }
@@ -112,64 +112,19 @@ class _CustomBottomBarState extends State<CustomBottomBar>
   /// Build individual navigation item
   Widget _buildNavItem(CustomBottomBarItem item) {
     final isSelected = widget.currentItem == item;
-    final isAddButton = item == CustomBottomBarItem.add;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     final color = isSelected
-        ? (isAddButton ? colorScheme.tertiary : colorScheme.primary)
+        ? colorScheme.primary
         : theme.bottomNavigationBarTheme.unselectedItemColor ??
               colorScheme.onSurfaceVariant;
 
     final icon = _getIcon(item, isSelected);
     final label = _getLabel(item);
 
-    // Special styling for Add button - wrapped in Expanded like other items
-    if (isAddButton) {
-      return Expanded(
-        child: ScaleTransition(
-          scale: _lastTappedItem == item
-              ? _scaleAnimation
-              : const AlwaysStoppedAnimation(1.0),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _handleItemTap(item),
-              customBorder: const CircleBorder(),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: colorScheme.tertiary.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, size: 22, color: colorScheme.tertiary),
-                  ),
-                  if (widget.showLabels) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      label,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: color,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                        fontSize: 10,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    }
+    // Account button uses standard styling like other nav items
+    // (removed special styling that was used for the old Add button)
 
     // Standard navigation items
     return Expanded(
@@ -240,7 +195,7 @@ class _CustomBottomBarState extends State<CustomBottomBar>
             children: [
               _buildNavItem(CustomBottomBarItem.dashboard),
               _buildNavItem(CustomBottomBarItem.trials),
-              _buildNavItem(CustomBottomBarItem.add),
+              _buildNavItem(CustomBottomBarItem.account),
               _buildNavItem(CustomBottomBarItem.analytics),
             ],
           ),

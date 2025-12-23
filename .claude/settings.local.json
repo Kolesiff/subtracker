@@ -16,7 +16,15 @@
       "Bash(/f/npx.cmd --version)",
       "Bash(where:*)",
       "Bash(flutter run:*)",
-      "Bash(flutter --version:*)"
+      "Bash(flutter --version:*)",
+      "Bash(flutter devices:*)",
+      "Bash(claude mcp remove:*)",
+      "Bash(timeout 120 flutter test:*)",
+      "Bash(keytool:*)",
+      "Bash(flutter clean:*)",
+      "Bash(nc:*)",
+      "mcp__plugin_episodic-memory_episodic-memory__search",
+      "Bash(gh repo create:*)"
     ]
   }
 }
