@@ -50,7 +50,8 @@ lib/
 - `lib/presentation/analytics/viewmodel/analytics_viewmodel.dart` - Analytics state management
 - `lib/presentation/auth/viewmodel/auth_viewmodel.dart` - Authentication state management
 - `lib/presentation/analytics/analytics_screen.dart` - Analytics dashboard (MVP with cards)
-- `lib/presentation/account_settings/account_settings_screen.dart` - Account settings (placeholder)
+- `lib/presentation/account_settings/account_settings_screen.dart` - Account settings screen
+- `lib/presentation/account_settings/viewmodel/account_settings_viewmodel.dart` - Settings state management
 
 **State Management:**
 ```dart
@@ -133,12 +134,12 @@ AppTheme.spacingMedium  // Static spacing constants
 Tests are in `test/` directory mirroring `lib/` structure:
 - `test/data/models/` - Model unit tests (35 tests)
 - `test/data/repositories/` - Repository tests (26 + 37 auth = 63 tests)
-- `test/presentation/` - Widget tests for screens and ViewModels (49 + 28 auth + 28 login = 105 tests)
+- `test/presentation/` - Widget tests for screens and ViewModels (49 + 28 auth + 28 login + 73 settings = 178 tests)
 - `test/widgets/` - Widget tests for components (30 tests)
 - `test/helpers/` - Shared test utilities
 - `integration_test/` - Integration tests for user flows (4 tests)
 
-**Total: ~235 tests** (auth tests: 97 total)
+**Total: ~310 tests** (auth: 97, account settings: 73)
 
 Run specific test file:
 ```bash
@@ -214,13 +215,20 @@ viewModel.validatePassword(password); // Requires 8+ chars, uppercase, lowercase
 - SHA-1 (debug): `87:DF:AA:9E:1D:11:F3:38:62:C9:5C:A6:4F:6E:1E:69:B4:47:0F:28`
 - Redirect URI: `https://pfvrusdcaepsagcxzwzi.supabase.co/auth/v1/callback`
 
-## Account Settings (In Progress)
+## Account Settings
 
-**Status:** Backend complete, UI placeholder needs implementation.
+**Status:** 100% complete. Full UI with dynamic theme switching.
 
-**Navigation:** Bottom nav bar now has Account tab (replaced Add button). FAB handles adding subscriptions.
+**Navigation:** Bottom nav bar has Account tab. FAB handles adding subscriptions.
 
-**Supabase Table:** Run this SQL in Supabase SQL Editor:
+**Features:**
+- Profile header (displays user info from AuthViewModel)
+- Theme selector (Light/Dark/System) - dynamically updates app theme
+- Currency selector (10 currencies)
+- Notifications toggle
+- Logout with confirmation dialog
+
+**Supabase Table:** Run this SQL in Supabase SQL Editor (required for persistence):
 ```sql
 CREATE TABLE user_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -242,27 +250,37 @@ CREATE POLICY "Users can update own settings" ON user_settings
   FOR UPDATE USING (auth.uid() = user_id);
 ```
 
-**Using SettingsRepository:**
+**Using AccountSettingsViewModel:**
 ```dart
-final settings = await context.read<SettingsRepository>().getSettings();
-await context.read<SettingsRepository>().updateThemeMode(ThemeMode.dark);
-await context.read<SettingsRepository>().updateNotificationsEnabled(false);
-await context.read<SettingsRepository>().updateCurrency('EUR');
+// Access settings state
+Consumer<AccountSettingsViewModel>(
+  builder: (context, viewModel, _) {
+    if (viewModel.isLoading) { ... }
+    if (viewModel.status == AccountSettingsStatus.error) { ... }
+    final theme = viewModel.currentThemeMode;
+    final currency = viewModel.currentCurrency;
+    final notifications = viewModel.isNotificationsEnabled;
+  },
+)
+
+// Update settings
+context.read<AccountSettingsViewModel>().updateThemeMode(ThemeMode.dark);
+context.read<AccountSettingsViewModel>().updateNotificationsEnabled(false);
+context.read<AccountSettingsViewModel>().updateCurrency('EUR');
 ```
 
-**Next Steps:**
-1. [ ] Run SQL migration in Supabase dashboard
-2. [ ] Implement AccountSettingsScreen UI (replace placeholder)
-3. [ ] Add AccountSettingsViewModel
-4. [ ] Add theme switching to app (connect to MaterialApp)
-5. [ ] Add settings tests
+**Key Files:**
+- `lib/presentation/account_settings/account_settings_screen.dart` - Main screen
+- `lib/presentation/account_settings/viewmodel/account_settings_viewmodel.dart` - ViewModel
+- `lib/presentation/account_settings/widgets/` - ProfileHeader, AppPreferences, NotificationToggle, AccountActions
+- `test/presentation/account_settings/` - 73 tests (TDD)
 
 ---
 
 ## Remaining Backlog
 
-1. **Account Settings UI** - Placeholder at `lib/presentation/account_settings/account_settings_screen.dart` needs full implementation with profile display, theme toggle, notifications, sign out.
-2. **Sizer percentage usage** - Some files use `.h`/`.w` for spacing. These are intentional for responsive design but should be reviewed for consistency.
-3. **Pre-existing lint warnings** - 26 lint issues exist (unused variables, deprecated API usage). Run `flutter analyze` to see details.
-4. **Golden tests** - Not implemented. Consider adding visual regression tests for key screens if needed.
-5. **Auth integration tests** - Add integration tests for full auth flow.
+1. **Sizer percentage usage** - Some files use `.h`/`.w` for spacing. These are intentional for responsive design but should be reviewed for consistency.
+2. **Pre-existing lint warnings** - ~25 lint issues exist (unused variables, deprecated API usage). Run `flutter analyze` to see details.
+3. **Golden tests** - Not implemented. Consider adding visual regression tests for key screens if needed.
+4. **Auth integration tests** - Add integration tests for full auth flow.
+5. **Supabase migration** - Run user_settings table SQL in Supabase dashboard for settings persistence.

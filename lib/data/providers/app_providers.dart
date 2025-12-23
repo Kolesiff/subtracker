@@ -5,6 +5,7 @@ import '../repositories/repositories.dart';
 import '../../presentation/subscription_dashboard/viewmodel/dashboard_viewmodel.dart';
 import '../../presentation/analytics/viewmodel/analytics_viewmodel.dart';
 import '../../presentation/auth/viewmodel/auth_viewmodel.dart';
+import '../../presentation/account_settings/viewmodel/account_settings_viewmodel.dart';
 
 /// Creates the list of providers for the application
 /// Wraps the app with all necessary dependency injection
@@ -40,6 +41,15 @@ class AppProviders extends StatelessWidget {
         ),
         Provider<SettingsRepository>(
           create: (_) => SupabaseSettingsRepository(),
+        ),
+
+        // Account Settings ViewModel
+        ChangeNotifierProxyProvider<SettingsRepository, AccountSettingsViewModel>(
+          create: (context) => AccountSettingsViewModel(
+            repository: context.read<SettingsRepository>(),
+          )..loadSettings(),
+          update: (context, repository, previous) =>
+              previous ?? AccountSettingsViewModel(repository: repository),
         ),
 
         // ViewModels (with automatic initialization)
@@ -94,4 +104,15 @@ extension ContextProviderExtensions on BuildContext {
 
   /// Watch the dashboard viewmodel for changes
   DashboardViewModel watchDashboardViewModel() => watch<DashboardViewModel>();
+
+  /// Get the settings repository
+  SettingsRepository get settingsRepository => read<SettingsRepository>();
+
+  /// Get the account settings viewmodel
+  AccountSettingsViewModel get settingsViewModel =>
+      read<AccountSettingsViewModel>();
+
+  /// Watch the account settings viewmodel for changes
+  AccountSettingsViewModel watchSettingsViewModel() =>
+      watch<AccountSettingsViewModel>();
 }

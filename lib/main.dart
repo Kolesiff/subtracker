@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/app_export.dart';
 import 'data/providers/app_providers.dart';
+import 'presentation/account_settings/viewmodel/account_settings_viewmodel.dart';
 import 'widgets/custom_error_widget.dart';
 
 void main() async {
@@ -51,25 +53,30 @@ class MyApp extends StatelessWidget {
     return AppProviders(
       child: Sizer(
         builder: (context, orientation, screenType) {
-          return MaterialApp(
-          title: 'subtracker',
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: ThemeMode.light,
-          // 🚨 CRITICAL: NEVER REMOVE OR MODIFY
-          builder: (context, child) {
-            return MediaQuery(
-              data: MediaQuery.of(
-                context,
-              ).copyWith(textScaler: TextScaler.linear(1.0)),
-              child: child!,
-            );
-          },
-          // 🚨 END CRITICAL SECTION
-          debugShowCheckedModeBanner: false,
-          routes: AppRoutes.routes,
-          initialRoute: AppRoutes.initial,
-        );
+          // Consumer for dynamic theme switching from AccountSettingsViewModel
+          return Consumer<AccountSettingsViewModel>(
+            builder: (context, settingsVM, child) {
+              return MaterialApp(
+                title: 'subtracker',
+                theme: AppTheme.lightTheme,
+                darkTheme: AppTheme.darkTheme,
+                themeMode: settingsVM.currentThemeMode,
+                // 🚨 CRITICAL: NEVER REMOVE OR MODIFY
+                builder: (context, child) {
+                  return MediaQuery(
+                    data: MediaQuery.of(
+                      context,
+                    ).copyWith(textScaler: TextScaler.linear(1.0)),
+                    child: child!,
+                  );
+                },
+                // 🚨 END CRITICAL SECTION
+                debugShowCheckedModeBanner: false,
+                routes: AppRoutes.routes,
+                initialRoute: AppRoutes.initial,
+              );
+            },
+          );
         },
       ),
     );
