@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
+import '../../data/models/subscription.dart';
 import '../../widgets/custom_app_bar.dart';
+import '../subscription_dashboard/viewmodel/dashboard_viewmodel.dart';
 import './widgets/cancel_subscription_sheet.dart';
 import './widgets/edit_subscription_sheet.dart';
 import './widgets/history_tab_widget.dart';
@@ -12,7 +15,9 @@ import './widgets/overview_tab_widget.dart';
 import './widgets/settings_tab_widget.dart';
 
 class SubscriptionDetail extends StatefulWidget {
-  const SubscriptionDetail({super.key});
+  final String subscriptionId;
+
+  const SubscriptionDetail({super.key, required this.subscriptionId});
 
   @override
   State<SubscriptionDetail> createState() => _SubscriptionDetailState();
@@ -23,72 +28,43 @@ class _SubscriptionDetailState extends State<SubscriptionDetail>
   late TabController _tabController;
   bool _isEditMode = false;
 
-  // Mock subscription data
-  final Map<String, dynamic> _subscriptionData = {
-    "id": 1,
-    "serviceName": "Netflix Premium",
-    "serviceLogo":
-        "https://img.rocket.new/generatedImages/rocket_gen_img_14907a52d-1764883678619.png",
-    "semanticLabel":
-        "Netflix logo - red N letter on black background, streaming service brand",
-    "cost": 15.99,
-    "currency": "\$",
-    "billingCycle": "Monthly",
-    "nextChargeDate": DateTime.now().add(const Duration(days: 12)),
-    "category": "Entertainment",
-    "status": "Active",
-    "autoRenew": true,
-    "paymentMethod": "Visa •••• 4242",
-    "startDate": DateTime(2023, 6, 15),
-    "description":
-        "Premium streaming service with 4K content and multiple screens",
-    "billingHistory": [
-      {
-        "date": DateTime(2024, 11, 22),
-        "amount": 15.99,
-        "status": "Paid",
-        "paymentMethod": "Visa •••• 4242",
+  // Get subscription from ViewModel
+  Subscription? get _subscription {
+    final viewModel = context.read<DashboardViewModel>();
+    return viewModel.getSubscriptionById(widget.subscriptionId);
+  }
+
+  // Convert subscription to legacy map format for existing widgets
+  Map<String, dynamic> get _subscriptionData {
+    final sub = _subscription;
+    if (sub == null) {
+      return {"serviceName": "Unknown", "cost": 0.0};
+    }
+    return {
+      "id": sub.id,
+      "serviceName": sub.name,
+      "serviceLogo": sub.logoUrl ?? "",
+      "semanticLabel": sub.semanticLabel ?? "${sub.name} logo",
+      "cost": sub.cost,
+      "currency": "\$",
+      "billingCycle": sub.billingCycle.displayName,
+      "nextChargeDate": sub.nextBillingDate,
+      "category": sub.category.displayName,
+      "status": sub.status.displayName,
+      "autoRenew": sub.status == SubscriptionStatus.active,
+      "paymentMethod": "Card on file",
+      "startDate": sub.createdAt ?? DateTime.now(),
+      "description": sub.notes ?? "",
+      "billingHistory": <Map<String, dynamic>>[],
+      "costTrend": <Map<String, dynamic>>[],
+      "notifications": {
+        "enabled": true,
+        "reminderDays": 3,
+        "emailNotifications": true,
+        "pushNotifications": true,
       },
-      {
-        "date": DateTime(2024, 10, 22),
-        "amount": 15.99,
-        "status": "Paid",
-        "paymentMethod": "Visa •••• 4242",
-      },
-      {
-        "date": DateTime(2024, 9, 22),
-        "amount": 15.99,
-        "status": "Paid",
-        "paymentMethod": "Visa •••• 4242",
-      },
-      {
-        "date": DateTime(2024, 8, 22),
-        "amount": 15.99,
-        "status": "Paid",
-        "paymentMethod": "Visa •••• 4242",
-      },
-      {
-        "date": DateTime(2024, 7, 22),
-        "amount": 15.99,
-        "status": "Paid",
-        "paymentMethod": "Visa •••• 4242",
-      },
-    ],
-    "costTrend": [
-      {"month": "Jul", "amount": 15.99},
-      {"month": "Aug", "amount": 15.99},
-      {"month": "Sep", "amount": 15.99},
-      {"month": "Oct", "amount": 15.99},
-      {"month": "Nov", "amount": 15.99},
-      {"month": "Dec", "amount": 15.99},
-    ],
-    "notifications": {
-      "enabled": true,
-      "reminderDays": 3,
-      "emailNotifications": true,
-      "pushNotifications": true,
-    },
-  };
+    };
+  }
 
   @override
   void initState() {
@@ -148,12 +124,26 @@ class _SubscriptionDetailState extends State<SubscriptionDetail>
     );
   }
 
-  void _handleCancellation(String reason) {
-    setState(() {
-      _subscriptionData["status"] = "Cancelled";
-      _subscriptionData["autoRenew"] = false;
-    });
-    _showSuccessSnackBar('Subscription cancelled successfully');
+  Future<void> _handleCancellation(String reason) async {
+    final sub = _subscription;
+    if (sub == null) return;
+
+    try {
+      final viewModel = context.read<DashboardViewModel>();
+      final cancelledSubscription = sub.copyWith(
+        status: SubscriptionStatus.cancelled,
+      );
+      await viewModel.updateSubscription(cancelledSubscription);
+
+      if (mounted) {
+        _showSuccessSnackBar('Subscription cancelled successfully');
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSuccessSnackBar('Failed to cancel subscription');
+      }
+    }
   }
 
   void _shareSubscription() {
@@ -253,9 +243,19 @@ class _SubscriptionDetailState extends State<SubscriptionDetail>
                     _showSuccessSnackBar('Subscription archived');
                     Navigator.pop(context);
                   },
-                  onDelete: () {
-                    _showSuccessSnackBar('Subscription deleted');
-                    Navigator.pop(context);
+                  onDelete: () async {
+                    try {
+                      final viewModel = context.read<DashboardViewModel>();
+                      await viewModel.deleteSubscription(widget.subscriptionId);
+                      if (mounted) {
+                        _showSuccessSnackBar('Subscription deleted');
+                        Navigator.pop(context);
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        _showSuccessSnackBar('Failed to delete subscription');
+                      }
+                    }
                   },
                 ),
               ],

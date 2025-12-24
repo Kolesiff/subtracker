@@ -111,6 +111,44 @@ class BillingHistory {
     );
   }
 
+  /// Create from Supabase JSON (snake_case keys)
+  factory BillingHistory.fromJson(Map<String, dynamic> json) {
+    return BillingHistory(
+      id: json['id'] as String,
+      subscriptionId: json['subscription_id'] as String,
+      billingDate: DateTime.parse(json['billing_date'] as String),
+      amount: (json['amount'] as num).toDouble(),
+      status: PaymentStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => PaymentStatus.completed,
+      ),
+      paymentMethod: json['payment_method'] as String?,
+      transactionId: json['transaction_id'] as String?,
+      notes: json['notes'] as String?,
+    );
+  }
+
+  /// Convert to Supabase JSON (snake_case keys, excludes id for inserts)
+  Map<String, dynamic> toJson() {
+    return {
+      'subscription_id': subscriptionId,
+      'billing_date': billingDate.toIso8601String(),
+      'amount': amount,
+      'status': status.name,
+      'payment_method': paymentMethod,
+      'transaction_id': transactionId,
+      'notes': notes,
+    };
+  }
+
+  /// Convert to Supabase JSON with ID (for updates)
+  Map<String, dynamic> toJsonWithId() {
+    return {
+      'id': id,
+      ...toJson(),
+    };
+  }
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;

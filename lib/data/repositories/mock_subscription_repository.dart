@@ -1,9 +1,21 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import 'subscription_repository.dart';
 
 /// Mock implementation of SubscriptionRepository for development and testing
 class MockSubscriptionRepository implements SubscriptionRepository {
+  final _subscriptionsController =
+      StreamController<List<Subscription>>.broadcast();
+
+  @override
+  Stream<List<Subscription>> get subscriptionsStream =>
+      _subscriptionsController.stream;
+
+  void _notifySubscriptionsChanged() {
+    _subscriptionsController.add(List.unmodifiable(_subscriptions));
+  }
   // In-memory storage for subscriptions
   final List<Subscription> _subscriptions = [
     Subscription(
@@ -132,6 +144,7 @@ class MockSubscriptionRepository implements SubscriptionRepository {
   Future<void> addSubscription(Subscription subscription) async {
     await Future.delayed(const Duration(milliseconds: 200));
     _subscriptions.add(subscription);
+    _notifySubscriptionsChanged();
   }
 
   @override
@@ -140,6 +153,7 @@ class MockSubscriptionRepository implements SubscriptionRepository {
     final index = _subscriptions.indexWhere((s) => s.id == subscription.id);
     if (index != -1) {
       _subscriptions[index] = subscription;
+      _notifySubscriptionsChanged();
     }
   }
 
@@ -147,6 +161,7 @@ class MockSubscriptionRepository implements SubscriptionRepository {
   Future<void> deleteSubscription(String id) async {
     await Future.delayed(const Duration(milliseconds: 200));
     _subscriptions.removeWhere((s) => s.id == id);
+    _notifySubscriptionsChanged();
   }
 
   @override
@@ -196,10 +211,21 @@ class MockSubscriptionRepository implements SubscriptionRepository {
 
 /// Mock implementation of TrialRepository for development and testing
 class MockTrialRepository implements TrialRepository {
+  final _trialsController = StreamController<List<Trial>>.broadcast();
+
+  @override
+  Stream<List<Trial>> get trialsStream => _trialsController.stream;
+
+  void _notifyTrialsChanged() {
+    final sorted = List<Trial>.from(_trials)
+      ..sort((a, b) => a.trialEndDate.compareTo(b.trialEndDate));
+    _trialsController.add(sorted);
+  }
+
   // In-memory storage for trials
   final List<Trial> _trials = [
     Trial(
-      id: 1,
+      id: '1',
       serviceName: 'Netflix Premium',
       logoUrl:
           'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=200&h=200&fit=crop',
@@ -211,7 +237,7 @@ class MockTrialRepository implements TrialRepository {
       cancellationUrl: 'https://netflix.com/cancel',
     ),
     Trial(
-      id: 2,
+      id: '2',
       serviceName: 'Adobe Creative Cloud',
       logoUrl:
           'https://img.rocket.new/generatedImages/rocket_gen_img_1c8eec6ea-1764647363957.png',
@@ -223,7 +249,7 @@ class MockTrialRepository implements TrialRepository {
       cancellationUrl: 'https://adobe.com/cancel',
     ),
     Trial(
-      id: 3,
+      id: '3',
       serviceName: 'Spotify Premium',
       logoUrl:
           'https://img.rocket.new/generatedImages/rocket_gen_img_1d71ebfa2-1764751041051.png',
@@ -235,7 +261,7 @@ class MockTrialRepository implements TrialRepository {
       cancellationUrl: 'https://spotify.com/cancel',
     ),
     Trial(
-      id: 4,
+      id: '4',
       serviceName: 'LinkedIn Premium',
       logoUrl:
           'https://img.rocket.new/generatedImages/rocket_gen_img_1e2ba7dbb-1764662219352.png',
@@ -247,7 +273,7 @@ class MockTrialRepository implements TrialRepository {
       cancellationUrl: 'https://linkedin.com/cancel',
     ),
     Trial(
-      id: 5,
+      id: '5',
       serviceName: 'Headspace Meditation',
       logoUrl:
           'https://img.rocket.new/generatedImages/rocket_gen_img_12e194567-1765458368238.png',
@@ -271,7 +297,7 @@ class MockTrialRepository implements TrialRepository {
   }
 
   @override
-  Future<Trial?> getTrial(int id) async {
+  Future<Trial?> getTrial(String id) async {
     await Future.delayed(const Duration(milliseconds: 100));
     try {
       return _trials.firstWhere((t) => t.id == id);
@@ -284,6 +310,7 @@ class MockTrialRepository implements TrialRepository {
   Future<void> addTrial(Trial trial) async {
     await Future.delayed(const Duration(milliseconds: 200));
     _trials.add(trial);
+    _notifyTrialsChanged();
   }
 
   @override
@@ -292,13 +319,15 @@ class MockTrialRepository implements TrialRepository {
     final index = _trials.indexWhere((t) => t.id == trial.id);
     if (index != -1) {
       _trials[index] = trial;
+      _notifyTrialsChanged();
     }
   }
 
   @override
-  Future<void> deleteTrial(int id) async {
+  Future<void> deleteTrial(String id) async {
     await Future.delayed(const Duration(milliseconds: 200));
     _trials.removeWhere((t) => t.id == id);
+    _notifyTrialsChanged();
   }
 
   @override
@@ -320,8 +349,9 @@ class MockTrialRepository implements TrialRepository {
   }
 
   @override
-  Future<void> cancelTrial(int id) async {
+  Future<void> cancelTrial(String id) async {
     await Future.delayed(const Duration(milliseconds: 200));
     _trials.removeWhere((t) => t.id == id);
+    _notifyTrialsChanged();
   }
 }

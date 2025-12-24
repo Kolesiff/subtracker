@@ -34,24 +34,31 @@ lib/
 ```
 
 **Key Files:**
-- `lib/data/models/subscription.dart` - Subscription model with BillingCycle, SubscriptionStatus, SubscriptionCategory enums
-- `lib/data/models/trial.dart` - Trial model with UrgencyLevel, CancellationDifficulty enums
+- `lib/data/models/subscription.dart` - Subscription model with BillingCycle, SubscriptionStatus, SubscriptionCategory enums + `fromJson()`/`toJson()` for Supabase
+- `lib/data/models/trial.dart` - Trial model (id is String/UUID) with UrgencyLevel, CancellationDifficulty enums + `fromJson()`/`toJson()` for Supabase
 - `lib/data/models/app_user.dart` - User model with AuthProvider enum (email, google, apple)
 - `lib/data/models/auth_result.dart` - Auth result wrapper with AuthError enum
 - `lib/data/models/user_settings.dart` - User settings model (theme, notifications, currency)
-- `lib/data/repositories/subscription_repository.dart` - Abstract repository interfaces
-- `lib/data/repositories/mock_subscription_repository.dart` - Mock implementations for development
+- `lib/data/repositories/subscription_repository.dart` - Abstract repository interfaces (includes `subscriptionsStream` and `trialsStream`)
+- `lib/data/repositories/supabase_subscription_repository.dart` - **Supabase implementation for user subscriptions**
+- `lib/data/repositories/supabase_trial_repository.dart` - **Supabase implementation for user trials**
+- `lib/data/repositories/mock_subscription_repository.dart` - Mock implementations for development/testing
 - `lib/data/repositories/auth_repository.dart` - Abstract auth interface
 - `lib/data/repositories/supabase_auth_repository.dart` - Supabase auth implementation
 - `lib/data/repositories/settings_repository.dart` - Abstract settings interface
 - `lib/data/repositories/supabase_settings_repository.dart` - Supabase settings implementation
-- `lib/data/providers/app_providers.dart` - MultiProvider setup wrapping the app
-- `lib/presentation/subscription_dashboard/viewmodel/dashboard_viewmodel.dart` - Dashboard state management
-- `lib/presentation/analytics/viewmodel/analytics_viewmodel.dart` - Analytics state management
+- `lib/data/providers/app_providers.dart` - MultiProvider setup (uses Supabase repos by default)
+- `lib/presentation/subscription_dashboard/viewmodel/dashboard_viewmodel.dart` - Dashboard state management with real-time stream
+- `lib/presentation/analytics/viewmodel/analytics_viewmodel.dart` - Analytics state management (real-time streams)
+- `lib/presentation/trial_tracker/viewmodel/trial_viewmodel.dart` - **Trial state management with real-time streams**
+- `lib/presentation/add_trial/add_trial.dart` - **Add Trial form screen**
 - `lib/presentation/auth/viewmodel/auth_viewmodel.dart` - Authentication state management
+- `lib/core/constants/category_colors.dart` - **Auto-assigns brandColor by SubscriptionCategory**
+- `lib/data/repositories/supabase_billing_history_repository.dart` - **Billing history repository (needs table)**
 - `lib/presentation/analytics/analytics_screen.dart` - Analytics dashboard (MVP with cards)
 - `lib/presentation/account_settings/account_settings_screen.dart` - Account settings screen
 - `lib/presentation/account_settings/viewmodel/account_settings_viewmodel.dart` - Settings state management
+- `lib/presentation/subscription_detail/subscription_detail.dart` - Subscription detail with working cancel/delete
 
 **State Management:**
 ```dart
@@ -139,7 +146,7 @@ Tests are in `test/` directory mirroring `lib/` structure:
 - `test/helpers/` - Shared test utilities
 - `integration_test/` - Integration tests for user flows (4 tests)
 
-**Total: ~310 tests** (auth: 97, account settings: 73)
+**Total: ~272 passing tests** (6 pre-existing failures unrelated to app logic)
 
 Run specific test file:
 ```bash
@@ -277,10 +284,173 @@ context.read<AccountSettingsViewModel>().updateCurrency('EUR');
 
 ---
 
+## Subscriptions & Trials (Supabase)
+
+**Status:** 100% complete. User-specific data with real-time sync.
+
+**Architecture:**
+- `SupabaseSubscriptionRepository` and `SupabaseTrialRepository` store data per user
+- Real-time streams update UI automatically when data changes
+- Cancel/delete buttons in SubscriptionDetail now work correctly
+
+**Supabase Tables:** Already created in Supabase dashboard:
+- `subscriptions` - User subscriptions with RLS policies
+- `trials` - User trials with RLS policies
+
+**Key Implementation Details:**
+- `Trial.id` is `String` (UUID), not int
+- Models have both `toMap()`/`fromMap()` (camelCase) and `toJson()`/`fromJson()` (snake_case for Supabase)
+- **IMPORTANT:** `toJson()` excludes `semantic_label` field (not in Supabase tables)
+- **IMPORTANT:** `brand_color` stored as hex string (e.g., `"#FF1B365D"`) not integer (avoids PostgreSQL overflow)
+- `_parseColor()` helper in subscription.dart handles both int and hex string formats from DB
+- `DashboardViewModel.filteredSubscriptions` excludes cancelled subscriptions
+- `DashboardViewModel.totalMonthlySpending` excludes cancelled subscriptions
+- `DashboardViewModel` subscribes to real-time stream in constructor
+- `SubscriptionDetail` accepts `subscriptionId` parameter and loads from ViewModel
+- Navigation uses `onGenerateRoute` for routes requiring arguments
+
+**Using DashboardViewModel:**
+```dart
+// Get subscription by ID
+final sub = context.read<DashboardViewModel>().getSubscriptionById(id);
+
+// CRUD operations (auto-synced via real-time stream)
+await viewModel.addSubscription(subscription);
+await viewModel.updateSubscription(subscription);
+await viewModel.deleteSubscription(id);
+
+// Cancel = update status to cancelled
+final cancelled = subscription.copyWith(status: SubscriptionStatus.cancelled);
+await viewModel.updateSubscription(cancelled);
+```
+
+**Navigating to SubscriptionDetail:**
+```dart
+Navigator.pushNamed(
+  context,
+  '/subscription-detail',
+  arguments: {'subscriptionId': subscription.id},
+);
+```
+
+---
+
+## Add Subscription (Supabase Connected)
+
+**Status:** 100% complete. Form persists to Supabase.
+
+**Input Methods:** Manual and Popular (Scan feature removed)
+
+**Popular Services:** 45 pre-configured services with Google Play Store icons:
+- Entertainment: Netflix, Spotify, Disney+, Max, YouTube, Apple Music, Amazon Prime, Hulu, Peacock, Paramount+, Crunchyroll, Twitch, Discord Nitro, PlayStation, Xbox Game Pass
+- Productivity: Microsoft 365, Notion, Slack, Zoom, Canva, Evernote, Google One, Dropbox, OneDrive, 1Password, NordVPN, ExpressVPN
+- Health: Headspace, Calm, Strava, MyFitnessPal, Fitbit Premium
+- Education: Duolingo Plus, LinkedIn Premium, Coursera, Skillshare
+- Shopping: DoorDash, Uber Eats, Instacart
+- News: Audible, Kindle, Medium
+
+**Key Files:**
+- `lib/presentation/add_subscription/add_subscription.dart` - Form with save to Supabase
+- `lib/core/constants/category_colors.dart` - Auto-assigns brandColor by category
+
+**How it works:**
+- Selecting a popular service captures `_selectedLogoUrl` along with name, cost, category
+- `_saveSubscription()` builds `Subscription` with UUID, logoUrl, and auto-assigned brandColor
+- Calls `DashboardViewModel.addSubscription()` to persist
+- Shows loading indicator during save, error snackbar on failure
+- Real-time stream auto-updates dashboard after save
+
+---
+
+## Trial Tracker (Supabase Connected)
+
+**Status:** 100% complete. Fully integrated with TrialViewModel and real-time streams.
+
+**Key Files:**
+- `lib/presentation/trial_tracker/viewmodel/trial_viewmodel.dart` - ViewModel with streams
+- `lib/presentation/add_trial/add_trial.dart` - Add Trial form screen
+- `lib/presentation/trial_tracker/trial_tracker.dart` - Main screen using `Consumer<TrialViewModel>`
+
+**How it works:**
+- Uses `Consumer<TrialViewModel>` to display real user trials (no mock data)
+- `_trialToMap()` converts Trial models to Maps for widget compatibility
+- Filter chips use `viewModel.setCategory()` and `viewModel.setTimeframe()`
+- Cancel actions call `viewModel.cancelTrial(id)` - UI updates via real-time stream
+
+**Using TrialViewModel:**
+```dart
+Consumer<TrialViewModel>(
+  builder: (context, viewModel, _) {
+    if (viewModel.isLoading) { ... }
+    final trials = viewModel.filteredTrials;
+    final critical = viewModel.criticalCount;
+  },
+)
+
+// CRUD operations
+await context.read<TrialViewModel>().addTrial(trial);
+await context.read<TrialViewModel>().cancelTrial(id);
+await context.read<TrialViewModel>().deleteTrial(id);
+```
+
+---
+
+## Analytics (Real-time Streams)
+
+**Status:** 100% complete. AnalyticsViewModel now uses real-time streams.
+
+**Key Changes:**
+- Subscribes to `subscriptionsStream` and `trialsStream` in constructor
+- Auto-updates when data changes (no manual refresh needed)
+- Proper `dispose()` cancels stream subscriptions
+
+---
+
+## Billing History (Repository Ready)
+
+**Status:** Repository complete. Needs Supabase table created.
+
+**Key Files:**
+- `lib/data/models/billing_history.dart` - Model with `fromJson()`/`toJson()`
+- `lib/data/repositories/supabase_billing_history_repository.dart` - CRUD + streams
+- `lib/data/repositories/subscription_repository.dart` - `BillingHistoryRepository` interface
+
+**Supabase SQL (run in SQL Editor):**
+```sql
+CREATE TABLE billing_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  subscription_id UUID NOT NULL REFERENCES subscriptions(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  billing_date TIMESTAMPTZ NOT NULL,
+  amount DECIMAL(10, 2) NOT NULL,
+  status TEXT DEFAULT 'completed' CHECK (status IN ('completed', 'pending', 'failed', 'refunded')),
+  payment_method TEXT,
+  transaction_id TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX idx_billing_history_subscription_id ON billing_history(subscription_id);
+CREATE INDEX idx_billing_history_user_id ON billing_history(user_id);
+
+ALTER TABLE billing_history ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own billing history" ON billing_history
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own billing history" ON billing_history
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own billing history" ON billing_history
+  FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own billing history" ON billing_history
+  FOR DELETE USING (auth.uid() = user_id);
+```
+
+---
+
 ## Remaining Backlog
 
-1. **Sizer percentage usage** - Some files use `.h`/`.w` for spacing. These are intentional for responsive design but should be reviewed for consistency.
-2. **Pre-existing lint warnings** - ~25 lint issues exist (unused variables, deprecated API usage). Run `flutter analyze` to see details.
-3. **Golden tests** - Not implemented. Consider adding visual regression tests for key screens if needed.
-4. **Auth integration tests** - Add integration tests for full auth flow.
-5. **Supabase migration** - Run user_settings table SQL in Supabase dashboard for settings persistence.
+1. **Sizer percentage usage** - Some files use `.h`/`.w` for spacing. Intentional for responsive design.
+2. **Pre-existing lint warnings** - ~25 lint issues exist. Run `flutter analyze` to see details.
+3. **Pre-existing test failures** - 7 tests fail (CustomBottomBar/CustomAppBar related). Not related to app logic.
+4. **HistoryTabWidget** - Needs to call `BillingHistoryRepository` to display real billing records.
+5. **Supabase `brand_color` column** - Must be TEXT type (not INTEGER) to store hex color strings.

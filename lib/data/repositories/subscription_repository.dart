@@ -35,6 +35,9 @@ abstract class SubscriptionRepository {
 
   /// Add billing record
   Future<void> addBillingRecord(BillingHistory record);
+
+  /// Stream of subscriptions for real-time updates
+  Stream<List<Subscription>> get subscriptionsStream;
 }
 
 /// Abstract interface for trial data operations
@@ -43,7 +46,7 @@ abstract class TrialRepository {
   Future<List<Trial>> getTrials();
 
   /// Get a single trial by ID
-  Future<Trial?> getTrial(int id);
+  Future<Trial?> getTrial(String id);
 
   /// Add a new trial
   Future<void> addTrial(Trial trial);
@@ -52,7 +55,7 @@ abstract class TrialRepository {
   Future<void> updateTrial(Trial trial);
 
   /// Delete a trial by ID
-  Future<void> deleteTrial(int id);
+  Future<void> deleteTrial(String id);
 
   /// Get trials by urgency level
   Future<List<Trial>> getByUrgency(UrgencyLevel level);
@@ -64,5 +67,29 @@ abstract class TrialRepository {
   Future<List<Trial>> getCriticalTrials();
 
   /// Mark trial as cancelled
-  Future<void> cancelTrial(int id);
+  Future<void> cancelTrial(String id);
+
+  /// Stream of trials for real-time updates
+  Stream<List<Trial>> get trialsStream;
+}
+
+/// Abstract interface for billing history operations
+abstract class BillingHistoryRepository {
+  /// Get all billing history for a subscription
+  Future<List<BillingHistory>> getBillingHistory(String subscriptionId);
+
+  /// Get all billing history for the current user
+  Future<List<BillingHistory>> getAllBillingHistory();
+
+  /// Add a billing record
+  Future<void> addBillingRecord(BillingHistory record);
+
+  /// Update a billing record
+  Future<void> updateBillingRecord(BillingHistory record);
+
+  /// Delete a billing record
+  Future<void> deleteBillingRecord(String id);
+
+  /// Stream of billing history for a subscription
+  Stream<List<BillingHistory>> billingHistoryStream(String subscriptionId);
 }

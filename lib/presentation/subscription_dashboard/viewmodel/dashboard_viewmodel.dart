@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import '../../../data/models/models.dart';
 import '../../../data/repositories/repositories.dart';
@@ -6,9 +8,32 @@ import '../../../data/repositories/repositories.dart';
 /// Manages subscription data, filtering, and computed statistics
 class DashboardViewModel extends ChangeNotifier {
   final SubscriptionRepository _repository;
+  StreamSubscription<List<Subscription>>? _subscriptionsSubscription;
 
   DashboardViewModel({required SubscriptionRepository repository})
-      : _repository = repository;
+      : _repository = repository {
+    _initRealTimeUpdates();
+  }
+
+  /// Initialize real-time stream subscription
+  void _initRealTimeUpdates() {
+    _subscriptionsSubscription = _repository.subscriptionsStream.listen(
+      (subscriptions) {
+        _subscriptions = subscriptions;
+        _isLoading = false;
+        notifyListeners();
+      },
+      onError: (error) {
+        debugPrint('DashboardViewModel: Stream error: $error');
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _subscriptionsSubscription?.cancel();
+    super.dispose();
+  }
 
   // State
   List<Subscription> _subscriptions = [];
@@ -27,11 +52,16 @@ class DashboardViewModel extends ChangeNotifier {
   bool get isSearchActive => _isSearchActive;
   bool get hasSubscriptions => _subscriptions.isNotEmpty;
 
-  /// Filtered subscriptions based on search query
+  /// Filtered subscriptions based on search query (excludes cancelled)
   List<Subscription> get filteredSubscriptions {
-    if (_searchQuery.isEmpty) return _subscriptions;
+    // First filter out cancelled subscriptions
+    final activeSubscriptions = _subscriptions
+        .where((sub) => sub.status != SubscriptionStatus.cancelled)
+        .toList();
+
+    if (_searchQuery.isEmpty) return activeSubscriptions;
     final lowerQuery = _searchQuery.toLowerCase();
-    return _subscriptions.where((sub) {
+    return activeSubscriptions.where((sub) {
       return sub.name.toLowerCase().contains(lowerQuery) ||
           sub.category.displayName.toLowerCase().contains(lowerQuery);
     }).toList();
@@ -45,9 +75,11 @@ class DashboardViewModel extends ChangeNotifier {
       ..sort((a, b) => a.nextBillingDate.compareTo(b.nextBillingDate));
   }
 
-  /// Total monthly spending across all subscriptions
+  /// Total monthly spending across active subscriptions (excludes cancelled)
   double get totalMonthlySpending {
-    return _subscriptions.fold(0.0, (sum, sub) => sum + sub.monthlyCost);
+    return _subscriptions
+        .where((sub) => sub.status != SubscriptionStatus.cancelled)
+        .fold(0.0, (sum, sub) => sum + sub.monthlyCost);
   }
 
   /// Total yearly spending

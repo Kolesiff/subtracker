@@ -55,18 +55,9 @@ class InputMethodSelectorWidget extends StatelessWidget {
               Expanded(
                 child: _buildMethodButton(
                   context: context,
-                  method: InputMethod.camera,
-                  icon: 'camera_alt',
-                  label: 'Scan',
-                ),
-              ),
-              SizedBox(width: 3.w),
-              Expanded(
-                child: _buildMethodButton(
-                  context: context,
                   method: InputMethod.service,
                   icon: 'apps',
-                  label: 'Service',
+                  label: 'Popular',
                 ),
               ),
             ],

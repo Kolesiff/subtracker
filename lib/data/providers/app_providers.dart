@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../repositories/repositories.dart';
+import '../repositories/supabase_subscription_repository.dart';
+import '../repositories/supabase_trial_repository.dart';
 import '../../presentation/subscription_dashboard/viewmodel/dashboard_viewmodel.dart';
 import '../../presentation/analytics/viewmodel/analytics_viewmodel.dart';
 import '../../presentation/auth/viewmodel/auth_viewmodel.dart';
 import '../../presentation/account_settings/viewmodel/account_settings_viewmodel.dart';
+import '../../presentation/trial_tracker/viewmodel/trial_viewmodel.dart';
 
 /// Creates the list of providers for the application
 /// Wraps the app with all necessary dependency injection
@@ -32,15 +35,18 @@ class AppProviders extends StatelessWidget {
               previous ?? AuthViewModel(repository: repository),
         ),
 
-        // Repositories (singleton instances)
+        // Repositories (Supabase implementations for user-specific data)
         Provider<SubscriptionRepository>(
-          create: (_) => MockSubscriptionRepository(),
+          create: (_) => SupabaseSubscriptionRepository(),
         ),
         Provider<TrialRepository>(
-          create: (_) => MockTrialRepository(),
+          create: (_) => SupabaseTrialRepository(),
         ),
         Provider<SettingsRepository>(
           create: (_) => SupabaseSettingsRepository(),
+        ),
+        Provider<BillingHistoryRepository>(
+          create: (_) => SupabaseBillingHistoryRepository(),
         ),
 
         // Account Settings ViewModel
@@ -59,6 +65,15 @@ class AppProviders extends StatelessWidget {
           )..loadSubscriptions(),
           update: (context, repository, previous) =>
               previous ?? DashboardViewModel(repository: repository),
+        ),
+
+        // Trial ViewModel (with automatic initialization)
+        ChangeNotifierProxyProvider<TrialRepository, TrialViewModel>(
+          create: (context) => TrialViewModel(
+            repository: context.read<TrialRepository>(),
+          )..loadTrials(),
+          update: (context, repository, previous) =>
+              previous ?? TrialViewModel(repository: repository),
         ),
 
         // Analytics ViewModel
@@ -99,6 +114,12 @@ extension ContextProviderExtensions on BuildContext {
   /// Get the trial repository
   TrialRepository get trialRepository => read<TrialRepository>();
 
+  /// Get the trial viewmodel
+  TrialViewModel get trialViewModel => read<TrialViewModel>();
+
+  /// Watch the trial viewmodel for changes
+  TrialViewModel watchTrialViewModel() => watch<TrialViewModel>();
+
   /// Get the dashboard viewmodel
   DashboardViewModel get dashboardViewModel => read<DashboardViewModel>();
 
@@ -107,6 +128,10 @@ extension ContextProviderExtensions on BuildContext {
 
   /// Get the settings repository
   SettingsRepository get settingsRepository => read<SettingsRepository>();
+
+  /// Get the billing history repository
+  BillingHistoryRepository get billingHistoryRepository =>
+      read<BillingHistoryRepository>();
 
   /// Get the account settings viewmodel
   AccountSettingsViewModel get settingsViewModel =>

@@ -131,11 +131,11 @@ class SubscriptionCardWidget extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: CustomImageWidget(
-                    imageUrl: subscription["logo"] as String,
+                    imageUrl: (subscription["logo"] as String?) ?? '',
                     width: 14.w,
                     height: 14.w,
                     fit: BoxFit.cover,
-                    semanticLabel: subscription["semanticLabel"] as String,
+                    semanticLabel: (subscription["semanticLabel"] as String?) ?? subscription["name"] as String,
                   ),
                 ),
               ),

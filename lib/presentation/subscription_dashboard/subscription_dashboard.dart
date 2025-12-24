@@ -64,7 +64,7 @@ class _SubscriptionDashboardState extends State<SubscriptionDashboard> {
     Navigator.pushNamed(
       context,
       '/subscription-detail',
-      arguments: _subscriptionToMap(subscription),
+      arguments: {'subscriptionId': subscription.id},
     );
   }
 

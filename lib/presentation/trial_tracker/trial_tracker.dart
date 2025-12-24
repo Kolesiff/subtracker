@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
+import '../../data/models/trial.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/custom_bottom_bar.dart';
+import './viewmodel/trial_viewmodel.dart';
 import './widgets/empty_state_widget.dart';
 import './widgets/filter_chips_widget.dart';
 import './widgets/quick_actions_bar_widget.dart';
@@ -21,118 +24,14 @@ class TrialTracker extends StatefulWidget {
 }
 
 class _TrialTrackerState extends State<TrialTracker> with SingleTickerProviderStateMixin {
-  // Selected filter state
-  String _selectedCategory = 'All';
-  String _selectedTimeframe = 'All';
-  bool _isRefreshing = false;
-  final Set<int> _selectedTrials = {};
+  // Selection state (filter state is now in ViewModel)
+  final Set<String> _selectedTrials = {};
   bool _isSelectionMode = false;
-
-  // Mock data for active trials
-  final List<Map<String, dynamic>> _activeTrials = [
-    {
-      "id": 1,
-      "serviceName": "Netflix Premium",
-      "logo": "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=200&h=200&fit=crop",
-      "semanticLabel": "Netflix logo with red N on black background",
-      "category": "Entertainment",
-      "trialEndDate": DateTime.now().add(const Duration(hours: 18)),
-      "conversionCost": "\$15.99/month",
-      "cancellationDifficulty": "Easy",
-      "cancellationUrl": "https://netflix.com/cancel",
-      "urgencyLevel": "critical",
-    },
-    {
-      "id": 2,
-      "serviceName": "Adobe Creative Cloud",
-      "logo": "https://img.rocket.new/generatedImages/rocket_gen_img_1c8eec6ea-1764647363957.png",
-      "semanticLabel": "Adobe Creative Cloud logo with red gradient background",
-      "category": "Productivity",
-      "trialEndDate": DateTime.now().add(const Duration(days: 3)),
-      "conversionCost": "\$54.99/month",
-      "cancellationDifficulty": "Medium",
-      "cancellationUrl": "https://adobe.com/cancel",
-      "urgencyLevel": "warning",
-    },
-    {
-      "id": 3,
-      "serviceName": "Spotify Premium",
-      "logo": "https://img.rocket.new/generatedImages/rocket_gen_img_1d71ebfa2-1764751041051.png",
-      "semanticLabel": "Spotify logo with green circular icon on dark background",
-      "category": "Entertainment",
-      "trialEndDate": DateTime.now().add(const Duration(days: 5)),
-      "conversionCost": "\$9.99/month",
-      "cancellationDifficulty": "Easy",
-      "cancellationUrl": "https://spotify.com/cancel",
-      "urgencyLevel": "warning",
-    },
-    {
-      "id": 4,
-      "serviceName": "LinkedIn Premium",
-      "logo": "https://img.rocket.new/generatedImages/rocket_gen_img_1e2ba7dbb-1764662219352.png",
-      "semanticLabel": "LinkedIn logo with blue background and white text",
-      "category": "Professional",
-      "trialEndDate": DateTime.now().add(const Duration(days: 12)),
-      "conversionCost": "\$29.99/month",
-      "cancellationDifficulty": "Medium",
-      "cancellationUrl": "https://linkedin.com/cancel",
-      "urgencyLevel": "safe",
-    },
-    {
-      "id": 5,
-      "serviceName": "Headspace Meditation",
-      "logo": "https://img.rocket.new/generatedImages/rocket_gen_img_12e194567-1765458368238.png",
-      "semanticLabel": "Meditation app icon with orange circular design on white background",
-      "category": "Health",
-      "trialEndDate": DateTime.now().add(const Duration(days: 20)),
-      "conversionCost": "\$12.99/month",
-      "cancellationDifficulty": "Easy",
-      "cancellationUrl": "https://headspace.com/cancel",
-      "urgencyLevel": "safe",
-    },
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _sortTrialsByUrgency();
-  }
-
-  /// Sort trials by expiration proximity
-  void _sortTrialsByUrgency() {
-    _activeTrials.sort((a, b) {
-      final aDate = a["trialEndDate"] as DateTime;
-      final bDate = b["trialEndDate"] as DateTime;
-      return aDate.compareTo(bDate);
-    });
-  }
-
-  /// Get filtered trials based on selected filters
-  List<Map<String, dynamic>> _getFilteredTrials() {
-    return _activeTrials.where((trial) {
-      final categoryMatch = _selectedCategory == 'All' || trial["category"] == _selectedCategory;
-      
-      bool timeframeMatch = true;
-      if (_selectedTimeframe != 'All') {
-        final daysUntilExpiry = (trial["trialEndDate"] as DateTime).difference(DateTime.now()).inDays;
-        timeframeMatch = _selectedTimeframe == 'Expiring Soon' 
-            ? daysUntilExpiry <= 7 
-            : daysUntilExpiry > 7;
-      }
-      
-      return categoryMatch && timeframeMatch;
-    }).toList();
-  }
 
   /// Handle pull to refresh
   Future<void> _handleRefresh() async {
-    setState(() => _isRefreshing = true);
-    
-    // Simulate refresh delay
-    await Future.delayed(const Duration(seconds: 1));
-    
-    setState(() => _isRefreshing = false);
-    
+    await context.read<TrialViewModel>().refreshTrials();
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -147,11 +46,11 @@ class _TrialTrackerState extends State<TrialTracker> with SingleTickerProviderSt
   void _handleTrialTap(Map<String, dynamic> trial) {
     if (_isSelectionMode) {
       setState(() {
-        final trialId = trial["id"] as int;
-        _selectedTrials.contains(trialId) 
+        final trialId = trial["id"] as String;
+        _selectedTrials.contains(trialId)
             ? _selectedTrials.remove(trialId)
             : _selectedTrials.add(trialId);
-        
+
         if (_selectedTrials.isEmpty) {
           _isSelectionMode = false;
         }
@@ -166,7 +65,7 @@ class _TrialTrackerState extends State<TrialTracker> with SingleTickerProviderSt
     HapticFeedback.mediumImpact();
     setState(() {
       _isSelectionMode = true;
-      _selectedTrials.add(trial["id"] as int);
+      _selectedTrials.add(trial["id"] as String);
     });
   }
 
@@ -395,25 +294,11 @@ class _TrialTrackerState extends State<TrialTracker> with SingleTickerProviderSt
     );
   }
 
-  /// Cancel trial
+  /// Cancel trial via ViewModel
   void _cancelTrial(Map<String, dynamic> trial) {
-    setState(() {
-      _activeTrials.removeWhere((t) => t["id"] == trial["id"]);
-    });
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${trial["serviceName"]} trial cancelled'),
-        action: SnackBarAction(
-          label: 'Undo',
-          onPressed: () {
-            setState(() {
-              _activeTrials.add(trial);
-              _sortTrialsByUrgency();
-            });
-          },
-        ),
-      ),
+    _cancelTrialFromViewModel(
+      trial["id"] as String,
+      trial["serviceName"] as String,
     );
   }
 
@@ -430,34 +315,40 @@ class _TrialTrackerState extends State<TrialTracker> with SingleTickerProviderSt
   /// Handle batch cancel
   void _handleBatchCancel() {
     if (_selectedTrials.isEmpty) return;
-    
+
     final theme = Theme.of(context);
     final count = _selectedTrials.length;
-    
+    final viewModel = context.read<TrialViewModel>();
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Cancel Selected Trials?'),
         content: Text('Are you sure you want to cancel $count trial${count > 1 ? 's' : ''}?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Keep Trials'),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              // Cancel each selected trial via ViewModel
+              for (final trialId in _selectedTrials) {
+                await viewModel.cancelTrial(trialId);
+              }
               setState(() {
-                _activeTrials.removeWhere((trial) => _selectedTrials.contains(trial["id"]));
                 _selectedTrials.clear();
                 _isSelectionMode = false;
               });
-              
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('$count trial${count > 1 ? 's' : ''} cancelled'),
-                ),
-              );
+
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('$count trial${count > 1 ? 's' : ''} cancelled'),
+                  ),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.error,
@@ -488,146 +379,195 @@ class _TrialTrackerState extends State<TrialTracker> with SingleTickerProviderSt
 
   /// Navigate to add trial screen
   void _navigateToAddTrial() {
-    Navigator.pushNamed(context, '/add-subscription');
+    Navigator.pushNamed(context, '/add-trial');
+  }
+
+  /// Convert Trial model to Map for compatibility with existing widgets
+  Map<String, dynamic> _trialToMap(Trial trial) {
+    return {
+      "id": trial.id,
+      "serviceName": trial.serviceName,
+      "logo": trial.logoUrl ?? "https://via.placeholder.com/200",
+      "semanticLabel": trial.semanticLabel ?? "${trial.serviceName} logo",
+      "category": trial.category.displayName,
+      "trialEndDate": trial.trialEndDate,
+      "conversionCost": trial.formattedConversionCost,
+      "cancellationDifficulty": trial.cancellationDifficulty.displayName,
+      "cancellationUrl": trial.cancellationUrl ?? "",
+      "urgencyLevel": trial.urgencyLevel.name,
+    };
+  }
+
+  /// Cancel trial via ViewModel
+  Future<void> _cancelTrialFromViewModel(String trialId, String serviceName) async {
+    try {
+      await context.read<TrialViewModel>().cancelTrial(trialId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$serviceName trial cancelled'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to cancel trial: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final filteredTrials = _getFilteredTrials();
-    
-    return Scaffold(
-      appBar: CustomAppBar(
-        title: 'Trial Tracker',
-        style: CustomAppBarStyle.standard,
-        automaticallyImplyLeading: false,
-        actions: [
-          if (_isSelectionMode)
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _selectedTrials.clear();
-                  _isSelectionMode = false;
-                });
-              },
-              child: const Text('Cancel'),
-            )
-          else
-            IconButton(
-              icon: CustomIconWidget(
-                iconName: 'search',
-                size: 24,
-                color: theme.colorScheme.onSurface,
-              ),
-              onPressed: () {
-                // Search functionality
-              },
-            ),
-        ],
-      ),
-      body: _activeTrials.isEmpty
-          ? const EmptyStateWidget()
-          : RefreshIndicator(
-              onRefresh: _handleRefresh,
-              child: Column(
-                children: [
-                  // Urgency summary
-                  UrgencySummaryWidget(trials: _activeTrials),
-                  
-                  // Filter chips
-                  FilterChipsWidget(
-                    selectedCategory: _selectedCategory,
-                    selectedTimeframe: _selectedTimeframe,
-                    onCategoryChanged: (value) {
-                      setState(() => _selectedCategory = value);
-                    },
-                    onTimeframeChanged: (value) {
-                      setState(() => _selectedTimeframe = value);
-                    },
+
+    return Consumer<TrialViewModel>(
+      builder: (context, viewModel, child) {
+        // Convert Trial models to Maps for widget compatibility
+        final activeTrialMaps = viewModel.activeTrials.map(_trialToMap).toList();
+        final filteredTrialMaps = viewModel.filteredTrials.map(_trialToMap).toList();
+
+        return Scaffold(
+          appBar: CustomAppBar(
+            title: 'Trial Tracker',
+            style: CustomAppBarStyle.standard,
+            automaticallyImplyLeading: false,
+            actions: [
+              if (_isSelectionMode)
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedTrials.clear();
+                      _isSelectionMode = false;
+                    });
+                  },
+                  child: const Text('Cancel'),
+                )
+              else
+                IconButton(
+                  icon: CustomIconWidget(
+                    iconName: 'search',
+                    size: 24,
+                    color: theme.colorScheme.onSurface,
                   ),
-                  
-                  // Trial list
-                  Expanded(
-                    child: filteredTrials.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                CustomIconWidget(
-                                  iconName: 'filter_list_off',
-                                  size: 64,
-                                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                                ),
-                                SizedBox(height: 2.h),
-                                Text(
-                                  'No trials match your filters',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.separated(
-                            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-                            itemCount: filteredTrials.length,
-                            separatorBuilder: (context, index) => SizedBox(height: 2.h),
-                            itemBuilder: (context, index) {
-                              final trial = filteredTrials[index];
-                              final isSelected = _selectedTrials.contains(trial["id"]);
-                              
-                              return TrialCardWidget(
-                                trial: trial,
-                                isSelected: isSelected,
-                                onTap: () => _handleTrialTap(trial),
-                                onLongPress: () => _handleTrialLongPress(trial),
-                                onCancel: () => _showCancelConfirmation(trial),
-                                onRemind: () => _setReminder(trial),
-                              );
+                  onPressed: () {
+                    // Search functionality
+                  },
+                ),
+            ],
+          ),
+          body: viewModel.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : !viewModel.hasTrials
+                  ? const EmptyStateWidget()
+                  : RefreshIndicator(
+                      onRefresh: _handleRefresh,
+                      child: Column(
+                        children: [
+                          // Urgency summary
+                          UrgencySummaryWidget(trials: activeTrialMaps),
+
+                          // Filter chips
+                          FilterChipsWidget(
+                            selectedCategory: viewModel.selectedCategory,
+                            selectedTimeframe: viewModel.selectedTimeframe,
+                            onCategoryChanged: (value) {
+                              viewModel.setCategory(value);
+                            },
+                            onTimeframeChanged: (value) {
+                              viewModel.setTimeframe(value);
                             },
                           ),
-                  ),
-                  
-                  // Quick actions bar (shown when trials selected)
-                  if (_isSelectionMode)
-                    QuickActionsBarWidget(
-                      selectedCount: _selectedTrials.length,
-                      onCancelAll: _handleBatchCancel,
-                      onRemindAll: _handleBatchRemind,
+
+                          // Trial list
+                          Expanded(
+                            child: filteredTrialMaps.isEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        CustomIconWidget(
+                                          iconName: 'filter_list_off',
+                                          size: 64,
+                                          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                                        ),
+                                        SizedBox(height: 2.h),
+                                        Text(
+                                          'No trials match your filters',
+                                          style: theme.textTheme.titleMedium?.copyWith(
+                                            color: theme.colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : ListView.separated(
+                                    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                                    itemCount: filteredTrialMaps.length,
+                                    separatorBuilder: (context, index) => SizedBox(height: 2.h),
+                                    itemBuilder: (context, index) {
+                                      final trial = filteredTrialMaps[index];
+                                      final isSelected = _selectedTrials.contains(trial["id"]);
+
+                                      return TrialCardWidget(
+                                        trial: trial,
+                                        isSelected: isSelected,
+                                        onTap: () => _handleTrialTap(trial),
+                                        onLongPress: () => _handleTrialLongPress(trial),
+                                        onCancel: () => _showCancelConfirmation(trial),
+                                        onRemind: () => _setReminder(trial),
+                                      );
+                                    },
+                                  ),
+                          ),
+
+                          // Quick actions bar (shown when trials selected)
+                          if (_isSelectionMode)
+                            QuickActionsBarWidget(
+                              selectedCount: _selectedTrials.length,
+                              onCancelAll: _handleBatchCancel,
+                              onRemindAll: _handleBatchRemind,
+                            ),
+                        ],
+                      ),
                     ),
-                ],
-              ),
-            ),
-      floatingActionButton: _isSelectionMode
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: _navigateToAddTrial,
-              icon: CustomIconWidget(
-                iconName: 'add',
-                size: 24,
-                color: theme.colorScheme.onTertiary,
-              ),
-              label: const Text('Add Trial'),
-            ),
-      bottomNavigationBar: CustomBottomBar(
-        currentItem: CustomBottomBarItem.trials,
-        onItemSelected: (item) {
-          switch (item) {
-            case CustomBottomBarItem.dashboard:
-              Navigator.pushReplacementNamed(context, '/subscription-dashboard');
-              break;
-            case CustomBottomBarItem.trials:
-              // Already on trials, no action needed
-              break;
-            case CustomBottomBarItem.account:
-              Navigator.pushReplacementNamed(context, '/account-settings');
-              break;
-            case CustomBottomBarItem.analytics:
-              Navigator.pushReplacementNamed(context, '/analytics');
-              break;
-          }
-        },
-      ),
+          floatingActionButton: _isSelectionMode
+              ? null
+              : FloatingActionButton.extended(
+                  onPressed: _navigateToAddTrial,
+                  icon: CustomIconWidget(
+                    iconName: 'add',
+                    size: 24,
+                    color: theme.colorScheme.onTertiary,
+                  ),
+                  label: const Text('Add Trial'),
+                ),
+          bottomNavigationBar: CustomBottomBar(
+            currentItem: CustomBottomBarItem.trials,
+            onItemSelected: (item) {
+              switch (item) {
+                case CustomBottomBarItem.dashboard:
+                  Navigator.pushReplacementNamed(context, '/subscription-dashboard');
+                  break;
+                case CustomBottomBarItem.trials:
+                  // Already on trials, no action needed
+                  break;
+                case CustomBottomBarItem.account:
+                  Navigator.pushReplacementNamed(context, '/account-settings');
+                  break;
+                case CustomBottomBarItem.analytics:
+                  Navigator.pushReplacementNamed(context, '/analytics');
+                  break;
+              }
+            },
+          ),
+        );
+      },
     );
   }
 }

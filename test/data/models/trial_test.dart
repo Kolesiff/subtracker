@@ -57,7 +57,7 @@ void main() {
 
     setUp(() {
       trial = Trial(
-        id: 1,
+        id: '1',
         serviceName: 'Netflix Premium',
         logoUrl: 'https://example.com/netflix.png',
         semanticLabel: 'Netflix logo',
@@ -164,7 +164,7 @@ void main() {
     test('toMap serializes correctly', () {
       final map = trial.toMap();
 
-      expect(map['id'], 1);
+      expect(map['id'], '1');
       expect(map['serviceName'], 'Netflix Premium');
       expect(map['conversionCost'], 15.99);
       expect(map['cancellationDifficulty'], 'easy');
@@ -173,7 +173,7 @@ void main() {
 
     test('fromMap deserializes correctly', () {
       final map = {
-        'id': 2,
+        'id': '2',
         'serviceName': 'Spotify',
         'logoUrl': 'https://example.com/spotify.png',
         'category': 'music',
@@ -184,7 +184,7 @@ void main() {
 
       final t = Trial.fromMap(map);
 
-      expect(t.id, 2);
+      expect(t.id, '2');
       expect(t.serviceName, 'Spotify');
       expect(t.conversionCost, 9.99);
       expect(t.cancellationDifficulty, CancellationDifficulty.easy);
@@ -193,7 +193,7 @@ void main() {
 
     test('equality is based on id', () {
       final trial1 = Trial(
-        id: 1,
+        id: '1',
         serviceName: 'Netflix',
         category: SubscriptionCategory.entertainment,
         trialEndDate: DateTime.now(),
@@ -201,7 +201,7 @@ void main() {
       );
 
       final trial2 = Trial(
-        id: 1,
+        id: '1',
         serviceName: 'Different Name',
         category: SubscriptionCategory.productivity,
         trialEndDate: DateTime.now().add(const Duration(days: 30)),

@@ -1,5 +1,17 @@
 import 'package:flutter/material.dart';
 
+/// Parse color from either int or hex string format (handles Supabase data)
+Color _parseColor(dynamic value) {
+  if (value == null) return const Color(0xFF000000);
+  if (value is int) return Color(value);
+  if (value is String) {
+    // Handle hex string like "#FF6B35FF" or "FF6B35FF"
+    final hex = value.replaceFirst('#', '');
+    return Color(int.parse(hex, radix: 16));
+  }
+  return const Color(0xFF000000);
+}
+
 /// Billing cycle for subscriptions
 enum BillingCycle {
   weekly,
@@ -281,6 +293,58 @@ class Subscription {
           : null,
       notes: map['notes'] as String?,
     );
+  }
+
+  /// Create from Supabase JSON (snake_case keys)
+  factory Subscription.fromJson(Map<String, dynamic> json) {
+    return Subscription(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      logoUrl: json['logo_url'] as String?,
+      semanticLabel: json['semantic_label'] as String?,
+      cost: (json['cost'] as num).toDouble(),
+      billingCycle: BillingCycle.values.firstWhere(
+        (e) => e.name == json['billing_cycle'],
+        orElse: () => BillingCycle.monthly,
+      ),
+      nextBillingDate: DateTime.parse(json['next_billing_date'] as String),
+      category: SubscriptionCategory.values.firstWhere(
+        (e) => e.name == json['category'],
+        orElse: () => SubscriptionCategory.other,
+      ),
+      status: SubscriptionStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => SubscriptionStatus.active,
+      ),
+      brandColor: _parseColor(json['brand_color']),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : null,
+      notes: json['notes'] as String?,
+    );
+  }
+
+  /// Convert to Supabase JSON (snake_case keys, excludes id for inserts)
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'logo_url': logoUrl,
+      'cost': cost,
+      'billing_cycle': billingCycle.name,
+      'next_billing_date': nextBillingDate.toIso8601String(),
+      'category': category.name,
+      'status': status.name,
+      'brand_color': '#${brandColor.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}',
+      'notes': notes,
+    };
+  }
+
+  /// Convert to Supabase JSON with ID (for updates)
+  Map<String, dynamic> toJsonWithId() {
+    return {
+      'id': id,
+      ...toJson(),
+    };
   }
 
   @override

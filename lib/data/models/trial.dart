@@ -95,7 +95,7 @@ enum CancellationDifficulty {
 
 /// Immutable Trial model for tracking free trial periods
 class Trial {
-  final int id;
+  final String id;
   final String serviceName;
   final String? logoUrl;
   final String? semanticLabel;
@@ -170,7 +170,7 @@ class Trial {
 
   /// Create a copy with modified fields
   Trial copyWith({
-    int? id,
+    String? id,
     String? serviceName,
     String? logoUrl,
     String? semanticLabel,
@@ -222,7 +222,7 @@ class Trial {
   /// Create from Map (for deserialization)
   factory Trial.fromMap(Map<String, dynamic> map) {
     return Trial(
-      id: map['id'] as int,
+      id: map['id'].toString(),
       serviceName: map['serviceName'] as String,
       logoUrl: map['logoUrl'] as String?,
       semanticLabel: map['semanticLabel'] as String?,
@@ -239,6 +239,55 @@ class Trial {
       notes: map['notes'] as String?,
       isNotificationEnabled: map['isNotificationEnabled'] as bool? ?? true,
     );
+  }
+
+  /// Create from Supabase JSON (snake_case keys)
+  factory Trial.fromJson(Map<String, dynamic> json) {
+    return Trial(
+      id: json['id'] as String,
+      serviceName: json['service_name'] as String,
+      logoUrl: json['logo_url'] as String?,
+      semanticLabel: json['semantic_label'] as String?,
+      category: SubscriptionCategory.values.firstWhere(
+        (e) => e.name == json['category'],
+        orElse: () => SubscriptionCategory.other,
+      ),
+      trialEndDate: DateTime.parse(json['trial_end_date'] as String),
+      conversionCost: (json['conversion_cost'] as num).toDouble(),
+      cancellationDifficulty: CancellationDifficulty.values.firstWhere(
+        (e) => e.name == json['cancellation_difficulty'],
+        orElse: () => CancellationDifficulty.medium,
+      ),
+      cancellationUrl: json['cancellation_url'] as String?,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : null,
+      notes: json['notes'] as String?,
+      isNotificationEnabled: json['is_notification_enabled'] as bool? ?? true,
+    );
+  }
+
+  /// Convert to Supabase JSON (snake_case keys, excludes id for inserts)
+  Map<String, dynamic> toJson() {
+    return {
+      'service_name': serviceName,
+      'logo_url': logoUrl,
+      'category': category.name,
+      'trial_end_date': trialEndDate.toIso8601String(),
+      'conversion_cost': conversionCost,
+      'cancellation_difficulty': cancellationDifficulty.name,
+      'cancellation_url': cancellationUrl,
+      'notes': notes,
+      'is_notification_enabled': isNotificationEnabled,
+    };
+  }
+
+  /// Convert to Supabase JSON with ID (for updates)
+  Map<String, dynamic> toJsonWithId() {
+    return {
+      'id': id,
+      ...toJson(),
+    };
   }
 
   @override

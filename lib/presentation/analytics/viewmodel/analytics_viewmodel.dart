@@ -1,23 +1,68 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import '../../../data/models/models.dart';
 import '../../../data/repositories/repositories.dart';
 
 /// ViewModel for Analytics dashboard
-/// Provides spending insights and subscription analytics
+/// Provides spending insights and subscription analytics with real-time updates
 class AnalyticsViewModel extends ChangeNotifier {
   final SubscriptionRepository _subscriptionRepository;
   final TrialRepository _trialRepository;
 
+  StreamSubscription<List<Subscription>>? _subscriptionStream;
+  StreamSubscription<List<Trial>>? _trialStream;
+
   List<Subscription> _subscriptions = [];
   List<Trial> _trials = [];
-  bool _isLoading = false;
+  bool _isLoading = true;
   String? _error;
 
   AnalyticsViewModel({
     required SubscriptionRepository subscriptionRepository,
     required TrialRepository trialRepository,
   })  : _subscriptionRepository = subscriptionRepository,
-        _trialRepository = trialRepository;
+        _trialRepository = trialRepository {
+    _initRealTimeUpdates();
+  }
+
+  /// Initialize real-time stream subscriptions
+  void _initRealTimeUpdates() {
+    _subscriptionStream = _subscriptionRepository.subscriptionsStream.listen(
+      (subscriptions) {
+        _subscriptions = subscriptions;
+        _isLoading = false;
+        _error = null;
+        notifyListeners();
+      },
+      onError: (error) {
+        debugPrint('AnalyticsViewModel: Subscription stream error: $error');
+        _error = 'Failed to load subscriptions';
+        notifyListeners();
+      },
+    );
+
+    _trialStream = _trialRepository.trialsStream.listen(
+      (trials) {
+        _trials = trials;
+        _isLoading = false;
+        _error = null;
+        notifyListeners();
+      },
+      onError: (error) {
+        debugPrint('AnalyticsViewModel: Trial stream error: $error');
+        _error = 'Failed to load trials';
+        notifyListeners();
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _subscriptionStream?.cancel();
+    _trialStream?.cancel();
+    super.dispose();
+  }
 
   // Getters
   bool get isLoading => _isLoading;

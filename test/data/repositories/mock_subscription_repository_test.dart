@@ -178,21 +178,21 @@ void main() {
     });
 
     test('getTrial returns trial by id', () async {
-      final trial = await repository.getTrial(1);
+      final trial = await repository.getTrial('1');
 
       expect(trial, isNotNull);
       expect(trial!.serviceName, 'Netflix Premium');
     });
 
     test('getTrial returns null for non-existent id', () async {
-      final trial = await repository.getTrial(999);
+      final trial = await repository.getTrial('999');
 
       expect(trial, isNull);
     });
 
     test('addTrial adds new trial', () async {
       final newTrial = Trial(
-        id: 99,
+        id: '99',
         serviceName: 'New Trial',
         category: SubscriptionCategory.productivity,
         trialEndDate: DateTime.now().add(const Duration(days: 7)),
@@ -207,20 +207,20 @@ void main() {
     });
 
     test('updateTrial updates existing trial', () async {
-      final original = await repository.getTrial(1);
+      final original = await repository.getTrial('1');
       final updated = original!.copyWith(conversionCost: 25.99);
 
       await repository.updateTrial(updated);
-      final result = await repository.getTrial(1);
+      final result = await repository.getTrial('1');
 
       expect(result!.conversionCost, 25.99);
     });
 
     test('deleteTrial removes trial', () async {
-      await repository.deleteTrial(1);
+      await repository.deleteTrial('1');
       final trials = await repository.getTrials();
 
-      expect(trials.any((t) => t.id == 1), false);
+      expect(trials.any((t) => t.id == '1'), false);
       expect(trials.length, 4);
     });
 
@@ -250,8 +250,8 @@ void main() {
     });
 
     test('cancelTrial removes trial', () async {
-      await repository.cancelTrial(1);
-      final trial = await repository.getTrial(1);
+      await repository.cancelTrial('1');
+      final trial = await repository.getTrial('1');
 
       expect(trial, isNull);
     });
