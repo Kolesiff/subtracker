@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/app_export.dart';
+import '../../data/constants/popular_trials.dart';
 import '../../data/models/subscription.dart';
 import '../../data/models/trial.dart';
 import '../trial_tracker/viewmodel/trial_viewmodel.dart';
+import './widgets/trial_input_method_selector.dart';
+import './widgets/popular_trials_grid_widget.dart';
+import './widgets/trial_duration_selector.dart';
 
 /// Screen for adding a new trial subscription
 class AddTrial extends StatefulWidget {
@@ -18,6 +21,9 @@ class AddTrial extends StatefulWidget {
 }
 
 class _AddTrialState extends State<AddTrial> {
+  // Input method
+  TrialInputMethod _selectedInputMethod = TrialInputMethod.manual;
+
   // Form controllers
   final TextEditingController _serviceNameController = TextEditingController();
   final TextEditingController _costController = TextEditingController();
@@ -27,8 +33,9 @@ class _AddTrialState extends State<AddTrial> {
 
   // Form state
   SubscriptionCategory _selectedCategory = SubscriptionCategory.entertainment;
+  TrialDuration _selectedDuration = TrialDuration.sevenDays;
   DateTime _trialEndDate = DateTime.now().add(const Duration(days: 7));
-  CancellationDifficulty _cancellationDifficulty = CancellationDifficulty.easy;
+  String? _selectedLogoUrl;
 
   // Validation and save state
   bool _isFormValid = false;
@@ -61,6 +68,55 @@ class _AddTrialState extends State<AddTrial> {
     }
   }
 
+  /// Handle duration change
+  void _handleDurationChange(TrialDuration duration) {
+    setState(() {
+      _selectedDuration = duration;
+      switch (duration) {
+        case TrialDuration.sevenDays:
+          _trialEndDate = DateTime.now().add(const Duration(days: 7));
+          break;
+        case TrialDuration.thirtyDays:
+          _trialEndDate = DateTime.now().add(const Duration(days: 30));
+          break;
+        case TrialDuration.custom:
+          // Keep current date for custom
+          break;
+      }
+    });
+  }
+
+  /// Handle popular service selection
+  void _handleServiceSelected(Map<String, dynamic> service) {
+    setState(() {
+      _serviceNameController.text = service['name'] as String;
+      _costController.text = (service['defaultCost'] as double).toString();
+      _selectedCategory = service['category'] as SubscriptionCategory;
+      _selectedLogoUrl = service['logo'] as String;
+
+      // Set trial duration based on service's typical trial
+      final trialDays = service['trialDays'] as int;
+      if (trialDays == 7) {
+        _selectedDuration = TrialDuration.sevenDays;
+        _trialEndDate = DateTime.now().add(const Duration(days: 7));
+      } else if (trialDays == 30) {
+        _selectedDuration = TrialDuration.thirtyDays;
+        _trialEndDate = DateTime.now().add(const Duration(days: 30));
+      } else if (trialDays > 0) {
+        _selectedDuration = TrialDuration.custom;
+        _trialEndDate = DateTime.now().add(Duration(days: trialDays));
+      } else {
+        _selectedDuration = TrialDuration.sevenDays;
+        _trialEndDate = DateTime.now().add(const Duration(days: 7));
+      }
+
+      // Switch to manual tab to show the filled form
+      _selectedInputMethod = TrialInputMethod.manual;
+    });
+    _validateForm();
+    HapticFeedback.mediumImpact();
+  }
+
   /// Save trial to Supabase via TrialViewModel
   Future<void> _saveTrial() async {
     if (!_isFormValid || _isSaving) return;
@@ -76,7 +132,7 @@ class _AddTrialState extends State<AddTrial> {
         category: _selectedCategory,
         trialEndDate: _trialEndDate,
         conversionCost: double.parse(_costController.text.trim()),
-        cancellationDifficulty: _cancellationDifficulty,
+        cancellationDifficulty: CancellationDifficulty.easy, // Default value
         cancellationUrl: _cancellationUrlController.text.trim().isEmpty
             ? null
             : _cancellationUrlController.text.trim(),
@@ -84,6 +140,7 @@ class _AddTrialState extends State<AddTrial> {
         notes: _notesController.text.trim().isEmpty
             ? null
             : _notesController.text.trim(),
+        logoUrl: _selectedLogoUrl,
       );
 
       await viewModel.addTrial(trial);
@@ -133,7 +190,7 @@ class _AddTrialState extends State<AddTrial> {
     }
   }
 
-  /// Select trial end date
+  /// Select custom trial end date
   Future<void> _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -253,7 +310,7 @@ class _AddTrialState extends State<AddTrial> {
                     color: _isFormValid
                         ? theme.colorScheme.primary
                         : theme.colorScheme.onSurfaceVariant
-                            .withValues(alpha: 0.4),
+                            .withValues(alpha: 0.5),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -262,169 +319,156 @@ class _AddTrialState extends State<AddTrial> {
           ],
         ),
         body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Service Name
-                Text('Service Name', style: theme.textTheme.labelLarge),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _serviceNameController,
-                  decoration: InputDecoration(
-                    hintText: 'e.g., Netflix, Spotify',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  textCapitalization: TextCapitalization.words,
-                ),
+          child: Column(
+            children: [
+              // Input method selector
+              TrialInputMethodSelector(
+                selectedMethod: _selectedInputMethod,
+                onMethodChanged: (method) {
+                  setState(() => _selectedInputMethod = method);
+                  HapticFeedback.lightImpact();
+                },
+              ),
 
-                const SizedBox(height: 24),
-
-                // Category Dropdown
-                Text('Category', style: theme.textTheme.labelLarge),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<SubscriptionCategory>(
-                  value: _selectedCategory,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  items: SubscriptionCategory.values.map((category) {
-                    return DropdownMenuItem(
-                      value: category,
-                      child: Text(category.displayName),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _selectedCategory = value);
-                      HapticFeedback.lightImpact();
-                    }
-                  },
-                ),
-
-                const SizedBox(height: 24),
-
-                // Trial End Date
-                Text('Trial End Date', style: theme.textTheme.labelLarge),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: _selectDate,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: theme.colorScheme.outline),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        CustomIconWidget(
-                          iconName: 'calendar_today',
-                          size: 20,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          DateFormat('MMMM dd, yyyy').format(_trialEndDate),
-                          style: theme.textTheme.bodyLarge,
-                        ),
-                        const Spacer(),
-                        CustomIconWidget(
-                          iconName: 'chevron_right',
-                          size: 20,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Conversion Cost
-                Text('Conversion Cost (per month)',
-                    style: theme.textTheme.labelLarge),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _costController,
-                  decoration: InputDecoration(
-                    hintText: '0.00',
-                    prefixText: '\$ ',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                        RegExp(r'^\d+\.?\d{0,2}')),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-
-                // Cancellation Difficulty
-                Text('Cancellation Difficulty',
-                    style: theme.textTheme.labelLarge),
-                const SizedBox(height: 8),
-                SegmentedButton<CancellationDifficulty>(
-                  segments: CancellationDifficulty.values.map((difficulty) {
-                    return ButtonSegment(
-                      value: difficulty,
-                      label: Text(difficulty.displayName),
-                    );
-                  }).toList(),
-                  selected: {_cancellationDifficulty},
-                  onSelectionChanged: (value) {
-                    setState(() => _cancellationDifficulty = value.first);
-                    HapticFeedback.lightImpact();
-                  },
-                ),
-
-                const SizedBox(height: 24),
-
-                // Cancellation URL (optional)
-                Text('Cancellation URL (Optional)',
-                    style: theme.textTheme.labelLarge),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _cancellationUrlController,
-                  decoration: InputDecoration(
-                    hintText: 'https://...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  keyboardType: TextInputType.url,
-                ),
-
-                const SizedBox(height: 24),
-
-                // Notes (optional)
-                Text('Notes (Optional)', style: theme.textTheme.labelLarge),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _notesController,
-                  decoration: InputDecoration(
-                    hintText: 'Add any notes about this trial...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  maxLines: 3,
-                ),
-
-                const SizedBox(height: 32),
-              ],
-            ),
+              // Content based on selected method
+              Expanded(
+                child: _selectedInputMethod == TrialInputMethod.popular
+                    ? _buildPopularTrialsContent()
+                    : _buildManualFormContent(theme),
+              ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// Build popular trials grid
+  Widget _buildPopularTrialsContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: PopularTrialsGridWidget(
+        services: PopularTrials.services,
+        onServiceSelected: _handleServiceSelected,
+      ),
+    );
+  }
+
+  /// Build manual form content
+  Widget _buildManualFormContent(ThemeData theme) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Service Name
+          Text('Service Name', style: theme.textTheme.labelLarge),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _serviceNameController,
+            decoration: InputDecoration(
+              hintText: 'e.g., Netflix, Spotify',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            textCapitalization: TextCapitalization.words,
+          ),
+
+          const SizedBox(height: 24),
+
+          // Category Dropdown
+          Text('Category', style: theme.textTheme.labelLarge),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<SubscriptionCategory>(
+            value: _selectedCategory,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            items: SubscriptionCategory.values.map((category) {
+              return DropdownMenuItem(
+                value: category,
+                child: Text(category.displayName),
+              );
+            }).toList(),
+            onChanged: (value) {
+              if (value != null) {
+                setState(() => _selectedCategory = value);
+                HapticFeedback.lightImpact();
+              }
+            },
+          ),
+
+          const SizedBox(height: 24),
+
+          // Trial Duration Selector (replaces CancellationDifficulty)
+          TrialDurationSelector(
+            selectedDuration: _selectedDuration,
+            trialEndDate: _trialEndDate,
+            onDurationChanged: _handleDurationChange,
+            onCustomDateTap: _selectDate,
+          ),
+
+          const SizedBox(height: 24),
+
+          // Conversion Cost
+          Text('Conversion Cost (per month)',
+              style: theme.textTheme.labelLarge),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _costController,
+            decoration: InputDecoration(
+              hintText: '0.00',
+              prefixText: '\$ ',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(
+                  RegExp(r'^\d+\.?\d{0,2}')),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Cancellation URL (optional)
+          Text('Cancellation URL (Optional)',
+              style: theme.textTheme.labelLarge),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _cancellationUrlController,
+            decoration: InputDecoration(
+              hintText: 'https://...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            keyboardType: TextInputType.url,
+          ),
+
+          const SizedBox(height: 24),
+
+          // Notes (optional)
+          Text('Notes (Optional)', style: theme.textTheme.labelLarge),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _notesController,
+            decoration: InputDecoration(
+              hintText: 'Add any notes about this trial...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            maxLines: 3,
+          ),
+
+          const SizedBox(height: 32),
+        ],
       ),
     );
   }

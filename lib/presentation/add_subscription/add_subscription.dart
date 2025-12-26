@@ -45,12 +45,12 @@ class _AddSubscriptionState extends State<AddSubscription> {
   // Save state
   bool _isSaving = false;
 
-  // Popular services data - using Google Play Store icons (reliable PNGs)
+  // Popular services data - using Unavatar.io (free, no auth required)
   final List<Map<String, dynamic>> _popularServices = [
     // Entertainment - Streaming
     {
       'name': 'Netflix',
-      'logo': 'https://play-lh.googleusercontent.com/TBRwjS_qfJCSj1m7zZB93FnpJM5fSpMA_wUlFDLxWAb45T9RmwBvQd5cWR5viJJOhkI',
+      'logo': 'https://unavatar.io/netflix.com',
       'semanticLabel': 'Netflix logo',
       'defaultCost': 15.99,
       'billingCycle': BillingCycle.monthly,
@@ -58,7 +58,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Spotify',
-      'logo': 'https://play-lh.googleusercontent.com/cShys-AmJ93dB0SV8kE6Fl5eSaf4-qMMZdwEDKI5VEmKAXfzOqbiaeAsqqrEBCTdIEs',
+      'logo': 'https://unavatar.io/spotify.com',
       'semanticLabel': 'Spotify logo',
       'defaultCost': 11.99,
       'billingCycle': BillingCycle.monthly,
@@ -66,7 +66,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Disney+',
-      'logo': 'https://play-lh.googleusercontent.com/xoGGYH2LgLibLDBoxMg-ZE16b-RNfITw_OgXBWRAPin2FZY4FGB9QKBYApR-0rSCkQ',
+      'logo': 'https://unavatar.io/disneyplus.com',
       'semanticLabel': 'Disney Plus logo',
       'defaultCost': 13.99,
       'billingCycle': BillingCycle.monthly,
@@ -74,7 +74,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Max',
-      'logo': 'https://play-lh.googleusercontent.com/1iyX7VdQ7MlM7iotI9XDtTwgiVmqFGzqwz10L67XVoyiTmJVoHX87QtqvcXgUnb0AC8',
+      'logo': 'https://unavatar.io/max.com',
       'semanticLabel': 'Max logo',
       'defaultCost': 15.99,
       'billingCycle': BillingCycle.monthly,
@@ -82,7 +82,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'YouTube Premium',
-      'logo': 'https://play-lh.googleusercontent.com/lMoItBgdPPVDJsNOVtP26EKHePkwBg-PkuY9NOrc-fumRtTFP4XhpUNk_22syN4Datc',
+      'logo': 'https://unavatar.io/youtube.com',
       'semanticLabel': 'YouTube logo',
       'defaultCost': 13.99,
       'billingCycle': BillingCycle.monthly,
@@ -90,23 +90,23 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Apple Music',
-      'logo': 'https://play-lh.googleusercontent.com/mOkjjo5Rzcpk7BsHrsLWnqVadUK1FlLd2-UlQvYkLL4E9A0LpyODNIQinXPfUMjUrbE',
+      'logo': 'https://unavatar.io/apple.com',
       'semanticLabel': 'Apple Music logo',
       'defaultCost': 10.99,
       'billingCycle': BillingCycle.monthly,
       'category': 'Entertainment',
     },
     {
-      'name': 'Amazon Prime Video',
-      'logo': 'https://play-lh.googleusercontent.com/mZ4BvGxLeE4gfCpAH3vbnkQ_fFfMw3SfdT6dQXzKWPdCHi2OERFrPHYTp5PKzj4jqkM',
-      'semanticLabel': 'Amazon Prime Video logo',
+      'name': 'Amazon Prime',
+      'logo': 'https://unavatar.io/amazon.com',
+      'semanticLabel': 'Amazon Prime logo',
       'defaultCost': 14.99,
       'billingCycle': BillingCycle.monthly,
       'category': 'Entertainment',
     },
     {
       'name': 'Hulu',
-      'logo': 'https://play-lh.googleusercontent.com/Y9IVBLaVoOhkJvnBo-uqgwvXvHqY8VPZAyHrL_mAaQ0zEOnH8qKYvG3FnLNpBAoG-g',
+      'logo': 'https://unavatar.io/hulu.com',
       'semanticLabel': 'Hulu logo',
       'defaultCost': 17.99,
       'billingCycle': BillingCycle.monthly,
@@ -114,7 +114,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Peacock',
-      'logo': 'https://play-lh.googleusercontent.com/siyplYOLKzlxRdU2rSS7gxvP-N4D8xHQf-7oGk1LqhHAowwqLqRn4dR9T4L2xhjlCdM',
+      'logo': 'https://unavatar.io/peacocktv.com',
       'semanticLabel': 'Peacock logo',
       'defaultCost': 7.99,
       'billingCycle': BillingCycle.monthly,
@@ -122,7 +122,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Paramount+',
-      'logo': 'https://play-lh.googleusercontent.com/MKBx2-sVfPtBxylSDOViZ6kK4_svUnHlgQGS9gXBH1uwKbFf3_BYLJFHCuLJO3JB3JY',
+      'logo': 'https://unavatar.io/paramountplus.com',
       'semanticLabel': 'Paramount Plus logo',
       'defaultCost': 11.99,
       'billingCycle': BillingCycle.monthly,
@@ -130,7 +130,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Crunchyroll',
-      'logo': 'https://play-lh.googleusercontent.com/xGUKBx2m-4pWDaIzp1FvYApRi8SvTz7QGmCLFtHzOPvbJc9nyp5VXEABJLjVfDmjLw',
+      'logo': 'https://unavatar.io/crunchyroll.com',
       'semanticLabel': 'Crunchyroll logo',
       'defaultCost': 7.99,
       'billingCycle': BillingCycle.monthly,
@@ -138,7 +138,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Twitch',
-      'logo': 'https://play-lh.googleusercontent.com/PoHuonmKmLvPuV_QdC6TLvpqAXlC2cqKxtHiHAPcFRBldmBCNEdGJb1MsKfaFLr0QQ',
+      'logo': 'https://unavatar.io/twitch.tv',
       'semanticLabel': 'Twitch logo',
       'defaultCost': 8.99,
       'billingCycle': BillingCycle.monthly,
@@ -147,7 +147,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     // Productivity
     {
       'name': 'Microsoft 365',
-      'logo': 'https://play-lh.googleusercontent.com/D6XDCje7pB0nNP1sOZkwD-tXkV0_As3ni21us5mMILPO_Jt4dOax9pVv5YnBwCVUbBM',
+      'logo': 'https://unavatar.io/microsoft.com',
       'semanticLabel': 'Microsoft 365 logo',
       'defaultCost': 9.99,
       'billingCycle': BillingCycle.monthly,
@@ -155,7 +155,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Notion',
-      'logo': 'https://play-lh.googleusercontent.com/PFLuWajA_oegNrJG7oLzQmlOLCXWRkW2ISPLMcOXQFGo5-yBJ3P7EtIZH-TYxv8OlA',
+      'logo': 'https://unavatar.io/notion.so',
       'semanticLabel': 'Notion logo',
       'defaultCost': 10.00,
       'billingCycle': BillingCycle.monthly,
@@ -163,7 +163,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Slack',
-      'logo': 'https://play-lh.googleusercontent.com/mzJpTCsTW_FuR6YqOPaLHrSEVCSJuXzCljdxnCKhVZMcu6EESZBQTCHxMh8slVtnHqk',
+      'logo': 'https://unavatar.io/slack.com',
       'semanticLabel': 'Slack logo',
       'defaultCost': 8.75,
       'billingCycle': BillingCycle.monthly,
@@ -171,7 +171,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Zoom',
-      'logo': 'https://play-lh.googleusercontent.com/yZgmiimA_JaKVh5Q5oJOSbpSgI1Kp7fhC4hQlQ_fTMU7O4QejH1VY5L6Y_oWlVVXVQ',
+      'logo': 'https://unavatar.io/zoom.us',
       'semanticLabel': 'Zoom logo',
       'defaultCost': 15.99,
       'billingCycle': BillingCycle.monthly,
@@ -179,7 +179,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Canva',
-      'logo': 'https://play-lh.googleusercontent.com/CjzbMcLbmTswzCGauGQExkFsSHvwjKEeWLbVVJ5MZ4bXYQlP0VeCL6yPkD4-n6ySHUM',
+      'logo': 'https://unavatar.io/canva.com',
       'semanticLabel': 'Canva logo',
       'defaultCost': 12.99,
       'billingCycle': BillingCycle.monthly,
@@ -187,7 +187,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Evernote',
-      'logo': 'https://play-lh.googleusercontent.com/mG-mj8FYF8Uc6xv5b2r_hLLK7lLM21WqNFmKuLGsM9EtHJ4BTc5X5A5omHR4Dxgq-Q',
+      'logo': 'https://unavatar.io/evernote.com',
       'semanticLabel': 'Evernote logo',
       'defaultCost': 10.99,
       'billingCycle': BillingCycle.monthly,
@@ -196,7 +196,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     // Cloud Storage
     {
       'name': 'Google One',
-      'logo': 'https://play-lh.googleusercontent.com/59sN5_tCSpnFKCTGcTBf5Em2v0RXk5T2BW7rF1xQtq69a-b4lLV6Qu6gQ8X0Kj-Guw',
+      'logo': 'https://unavatar.io/google.com',
       'semanticLabel': 'Google One logo',
       'defaultCost': 2.99,
       'billingCycle': BillingCycle.monthly,
@@ -204,7 +204,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Dropbox',
-      'logo': 'https://play-lh.googleusercontent.com/cNcq2_VqfPxMYgNHMmNMkMwlHND5q1zU-K0YQSJ4bPBkF-U3D7fWoC_E4_pPK8qJJw',
+      'logo': 'https://unavatar.io/dropbox.com',
       'semanticLabel': 'Dropbox logo',
       'defaultCost': 11.99,
       'billingCycle': BillingCycle.monthly,
@@ -212,7 +212,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'OneDrive',
-      'logo': 'https://play-lh.googleusercontent.com/9Sqr9LcoYh5VL3wIcZpKb5C8R2xExnLTfAO0D5bKZCJj-MeqPjEcRcWMHCyM4RiLwA',
+      'logo': 'https://unavatar.io/onedrive.live.com',
       'semanticLabel': 'OneDrive logo',
       'defaultCost': 1.99,
       'billingCycle': BillingCycle.monthly,
@@ -221,15 +221,15 @@ class _AddSubscriptionState extends State<AddSubscription> {
     // Gaming
     {
       'name': 'Xbox Game Pass',
-      'logo': 'https://play-lh.googleusercontent.com/7j1q3FaTvb4r2QDrZ1J7JNCJ3yI-R7xJxQC8vJlQsGkdKrDVMpBYZ5xBqyPBhJMFRw',
+      'logo': 'https://unavatar.io/xbox.com',
       'semanticLabel': 'Xbox Game Pass logo',
       'defaultCost': 16.99,
       'billingCycle': BillingCycle.monthly,
       'category': 'Entertainment',
     },
     {
-      'name': 'PlayStation App',
-      'logo': 'https://play-lh.googleusercontent.com/tDaMwqdDWTvE6DRUjYQLSPGXJNvJQx6X3sB8y_eBXMoMFFk0XZUJmGFqZ8dJVfKmmQ',
+      'name': 'PlayStation Plus',
+      'logo': 'https://unavatar.io/playstation.com',
       'semanticLabel': 'PlayStation logo',
       'defaultCost': 17.99,
       'billingCycle': BillingCycle.monthly,
@@ -237,7 +237,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Discord Nitro',
-      'logo': 'https://play-lh.googleusercontent.com/0oO5sAneb9lJP6l8c6DH4aj6f85qNpplQVHmPmbbBxAukDnlO7DarDW0b-kEIHa8SQ',
+      'logo': 'https://unavatar.io/discord.com',
       'semanticLabel': 'Discord logo',
       'defaultCost': 9.99,
       'billingCycle': BillingCycle.monthly,
@@ -246,7 +246,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     // Health & Fitness
     {
       'name': 'Headspace',
-      'logo': 'https://play-lh.googleusercontent.com/XyPHKRZnTHJgKE0gI6MKJjh5wJJPR0yoJzrg0YGk0-bALxMRRmGLmZk8QSgF2PYaXMfO',
+      'logo': 'https://unavatar.io/headspace.com',
       'semanticLabel': 'Headspace logo',
       'defaultCost': 12.99,
       'billingCycle': BillingCycle.monthly,
@@ -254,7 +254,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Calm',
-      'logo': 'https://play-lh.googleusercontent.com/HZkwYjYJMw0DOZSrZkKjCNgr6M5OxJYmhLD9qQ8IKZvLlvf9L9i3LCClTQwqkI_pCMw',
+      'logo': 'https://unavatar.io/calm.com',
       'semanticLabel': 'Calm logo',
       'defaultCost': 14.99,
       'billingCycle': BillingCycle.monthly,
@@ -262,7 +262,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Strava',
-      'logo': 'https://play-lh.googleusercontent.com/VZVr7A0Gkf8GKKyXb3fI8c0rgH9gN1fJ6gKM-aLzMQqH8PJTgYQwwwQK4gLoxvzL8fk',
+      'logo': 'https://unavatar.io/strava.com',
       'semanticLabel': 'Strava logo',
       'defaultCost': 11.99,
       'billingCycle': BillingCycle.monthly,
@@ -270,7 +270,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'MyFitnessPal',
-      'logo': 'https://play-lh.googleusercontent.com/w1UpXK4_QZWmLGFdvUKLTXKrQX9TZC7WG0Fn8cGO4KhHhXV0mMmPSBqJ-gGSF4M3dQ',
+      'logo': 'https://unavatar.io/myfitnesspal.com',
       'semanticLabel': 'MyFitnessPal logo',
       'defaultCost': 19.99,
       'billingCycle': BillingCycle.monthly,
@@ -278,7 +278,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Fitbit Premium',
-      'logo': 'https://play-lh.googleusercontent.com/PZGF2UMQPY7X3-nGBTmVkqS7xPQe2TZ-vRHEZLN7EJpJPzGqFWpNz8-dK8LqK8q8Kg',
+      'logo': 'https://unavatar.io/fitbit.com',
       'semanticLabel': 'Fitbit logo',
       'defaultCost': 9.99,
       'billingCycle': BillingCycle.monthly,
@@ -287,7 +287,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     // Education
     {
       'name': 'Duolingo Plus',
-      'logo': 'https://play-lh.googleusercontent.com/9CDH4Gg3CLR4xAvkYNuNfYbIb4U5Hxu8mMYJBmLxGwfMLuQIwXK-aqWqy4n8V0LxuA',
+      'logo': 'https://unavatar.io/duolingo.com',
       'semanticLabel': 'Duolingo logo',
       'defaultCost': 12.99,
       'billingCycle': BillingCycle.monthly,
@@ -295,7 +295,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'LinkedIn Premium',
-      'logo': 'https://play-lh.googleusercontent.com/kMofEFLjobZy_bCuaiDogzBcUT-dz3BBbOrj1kjVVPLf1K91XMZ6N0yl2r8j7_BMOsY',
+      'logo': 'https://unavatar.io/linkedin.com',
       'semanticLabel': 'LinkedIn logo',
       'defaultCost': 29.99,
       'billingCycle': BillingCycle.monthly,
@@ -303,7 +303,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Coursera',
-      'logo': 'https://play-lh.googleusercontent.com/BdVXzaT3dDDi3dHu7t-GEVfCklMGDy7RZ9j-0q2jYiPNQ7-w5qQZKP0l7L_O7FkJvEM',
+      'logo': 'https://unavatar.io/coursera.org',
       'semanticLabel': 'Coursera logo',
       'defaultCost': 59.00,
       'billingCycle': BillingCycle.monthly,
@@ -311,7 +311,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Skillshare',
-      'logo': 'https://play-lh.googleusercontent.com/Hq6L9P6j6qMBLJPWL2RYhD0Y0HM2E5m5xKlZKxY3V0n0FXCXW5Xp3-1H7U3YdWVxHw',
+      'logo': 'https://unavatar.io/skillshare.com',
       'semanticLabel': 'Skillshare logo',
       'defaultCost': 13.99,
       'billingCycle': BillingCycle.monthly,
@@ -320,7 +320,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     // Security & VPN
     {
       'name': '1Password',
-      'logo': 'https://play-lh.googleusercontent.com/dz7StpqAcNe_4ZLQC1KSXM2IxM1s0L5J_V4sAJr5wWNPVMvKPKqJN0PBj7m9MXO6Ow',
+      'logo': 'https://unavatar.io/1password.com',
       'semanticLabel': '1Password logo',
       'defaultCost': 2.99,
       'billingCycle': BillingCycle.monthly,
@@ -328,7 +328,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'NordVPN',
-      'logo': 'https://play-lh.googleusercontent.com/WGGV8jx8L4e-D_2v_eqE-5MiZVRqVQbYVUAf8kF0tLQkLT-hxrfF6RFr0HbFwvVfnYg',
+      'logo': 'https://unavatar.io/nordvpn.com',
       'semanticLabel': 'NordVPN logo',
       'defaultCost': 12.99,
       'billingCycle': BillingCycle.monthly,
@@ -336,7 +336,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'ExpressVPN',
-      'logo': 'https://play-lh.googleusercontent.com/bQpVx_S0SILq4G1S5qCNGqQMdRR7YkV9dQRhM-2R0vNB6PALTh5L2ZvgXuJl7Cy0FKM',
+      'logo': 'https://unavatar.io/expressvpn.com',
       'semanticLabel': 'ExpressVPN logo',
       'defaultCost': 12.95,
       'billingCycle': BillingCycle.monthly,
@@ -345,7 +345,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     // Shopping & Delivery
     {
       'name': 'DoorDash',
-      'logo': 'https://play-lh.googleusercontent.com/RQWIBZFV7kWlXcxPPTiO1mLJWKv_F_Qd7x4YY5JQv6KQ9WYTJZJfUvZU5Y4CXZVx1w',
+      'logo': 'https://unavatar.io/doordash.com',
       'semanticLabel': 'DoorDash logo',
       'defaultCost': 9.99,
       'billingCycle': BillingCycle.monthly,
@@ -353,7 +353,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Uber Eats',
-      'logo': 'https://play-lh.googleusercontent.com/HmCp_yKcMIoESvbLMSvLHS4UfT0p25xdOlg9K7WZJK5lCaXgGmXlVs2YbV2D0X5JxQ',
+      'logo': 'https://unavatar.io/ubereats.com',
       'semanticLabel': 'Uber Eats logo',
       'defaultCost': 9.99,
       'billingCycle': BillingCycle.monthly,
@@ -361,7 +361,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Instacart',
-      'logo': 'https://play-lh.googleusercontent.com/YHdVfS_xDx4bM7OiAP7BLbz2cSCVKJPDpVLdLzZDjJPFvbvTwXi_1L4KfGJL7jDMnA',
+      'logo': 'https://unavatar.io/instacart.com',
       'semanticLabel': 'Instacart logo',
       'defaultCost': 9.99,
       'billingCycle': BillingCycle.monthly,
@@ -370,15 +370,15 @@ class _AddSubscriptionState extends State<AddSubscription> {
     // News & Reading
     {
       'name': 'Audible',
-      'logo': 'https://play-lh.googleusercontent.com/VKdLqM3eQ5bOnV9T2Oet1jJOuK7m5D0lEJ3zghbB8OQXqH9jLEYHXjHoNmgQEJ8wGQ',
+      'logo': 'https://unavatar.io/audible.com',
       'semanticLabel': 'Audible logo',
       'defaultCost': 14.95,
       'billingCycle': BillingCycle.monthly,
       'category': 'Entertainment',
     },
     {
-      'name': 'Kindle',
-      'logo': 'https://play-lh.googleusercontent.com/X3fOw07L8VQx5JKx7A5_3ooJbJCg-Ck2W0vQZ0y5nWfxoGCnBb_XF7eSnL3RQTJ-8g',
+      'name': 'Kindle Unlimited',
+      'logo': 'https://unavatar.io/kindle.amazon.com',
       'semanticLabel': 'Kindle logo',
       'defaultCost': 11.99,
       'billingCycle': BillingCycle.monthly,
@@ -386,7 +386,7 @@ class _AddSubscriptionState extends State<AddSubscription> {
     },
     {
       'name': 'Medium',
-      'logo': 'https://play-lh.googleusercontent.com/ouJFk1LLAuXmXq8KS_FBWCWGCZ0AJ4LMxrVv8g4C3e3DfZoTPxQu_5r7rHEVJQk-1g',
+      'logo': 'https://unavatar.io/medium.com',
       'semanticLabel': 'Medium logo',
       'defaultCost': 5.00,
       'billingCycle': BillingCycle.monthly,
