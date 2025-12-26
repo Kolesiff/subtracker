@@ -49,6 +49,11 @@ class AppProviders extends StatelessWidget {
           create: (_) => SupabaseBillingHistoryRepository(),
         ),
 
+        // Notification Repository
+        Provider<NotificationRepository>(
+          create: (_) => NotificationRepositoryImpl(),
+        ),
+
         // Account Settings ViewModel
         ChangeNotifierProxyProvider<SettingsRepository, AccountSettingsViewModel>(
           create: (context) => AccountSettingsViewModel(
@@ -58,22 +63,34 @@ class AppProviders extends StatelessWidget {
               previous ?? AccountSettingsViewModel(repository: repository),
         ),
 
-        // ViewModels (with automatic initialization)
-        ChangeNotifierProxyProvider<SubscriptionRepository, DashboardViewModel>(
+        // Dashboard ViewModel (with automatic initialization and notification support)
+        ChangeNotifierProxyProvider2<SubscriptionRepository, NotificationRepository,
+            DashboardViewModel>(
           create: (context) => DashboardViewModel(
             repository: context.read<SubscriptionRepository>(),
+            notificationRepository: context.read<NotificationRepository>(),
           )..loadSubscriptions(),
-          update: (context, repository, previous) =>
-              previous ?? DashboardViewModel(repository: repository),
+          update: (context, repository, notificationRepo, previous) =>
+              previous ??
+              DashboardViewModel(
+                repository: repository,
+                notificationRepository: notificationRepo,
+              ),
         ),
 
-        // Trial ViewModel (with automatic initialization)
-        ChangeNotifierProxyProvider<TrialRepository, TrialViewModel>(
+        // Trial ViewModel (with automatic initialization and notification support)
+        ChangeNotifierProxyProvider2<TrialRepository, NotificationRepository,
+            TrialViewModel>(
           create: (context) => TrialViewModel(
             repository: context.read<TrialRepository>(),
+            notificationRepository: context.read<NotificationRepository>(),
           )..loadTrials(),
-          update: (context, repository, previous) =>
-              previous ?? TrialViewModel(repository: repository),
+          update: (context, repository, notificationRepo, previous) =>
+              previous ??
+              TrialViewModel(
+                repository: repository,
+                notificationRepository: notificationRepo,
+              ),
         ),
 
         // Analytics ViewModel
@@ -132,6 +149,10 @@ extension ContextProviderExtensions on BuildContext {
   /// Get the billing history repository
   BillingHistoryRepository get billingHistoryRepository =>
       read<BillingHistoryRepository>();
+
+  /// Get the notification repository
+  NotificationRepository get notificationRepository =>
+      read<NotificationRepository>();
 
   /// Get the account settings viewmodel
   AccountSettingsViewModel get settingsViewModel =>

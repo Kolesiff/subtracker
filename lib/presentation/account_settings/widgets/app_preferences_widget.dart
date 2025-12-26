@@ -6,7 +6,7 @@ import '../../../theme/app_theme.dart';
 import '../viewmodel/account_settings_viewmodel.dart';
 import 'settings_section_widget.dart';
 
-/// Widget for app preferences (theme, currency)
+/// Widget for app preferences (currency)
 /// Displays selection tiles that open bottom sheets for choices
 class AppPreferencesWidget extends StatelessWidget {
   const AppPreferencesWidget({super.key});
@@ -18,14 +18,6 @@ class AppPreferencesWidget extends StatelessWidget {
         return SettingsSectionWidget(
           title: 'App Preferences',
           children: [
-            _buildSelectionTile(
-              context: context,
-              icon: Icons.palette_outlined,
-              title: 'Theme',
-              currentValue: _themeModeToString(viewModel.currentThemeMode),
-              onTap: () => _showThemeSheet(context, viewModel),
-            ),
-            Divider(height: 1, color: Theme.of(context).dividerColor),
             _buildSelectionTile(
               context: context,
               icon: Icons.attach_money,
@@ -55,67 +47,6 @@ class AppPreferencesWidget extends StatelessWidget {
         color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
       onTap: onTap,
-    );
-  }
-
-  String _themeModeToString(ThemeMode mode) {
-    switch (mode) {
-      case ThemeMode.light:
-        return 'Light';
-      case ThemeMode.dark:
-        return 'Dark';
-      case ThemeMode.system:
-        return 'System';
-    }
-  }
-
-  void _showThemeSheet(BuildContext context, AccountSettingsViewModel viewModel) {
-    final options = [
-      ('Light', ThemeMode.light),
-      ('Dark', ThemeMode.dark),
-      ('System', ThemeMode.system),
-    ];
-
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(AppTheme.spacingMedium),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Select Theme',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: AppTheme.spacingMedium),
-              ...options.map((option) {
-                final isSelected = viewModel.currentThemeMode == option.$2;
-                return ListTile(
-                  title: Text(
-                    option.$1,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    ),
-                  ),
-                  trailing: isSelected
-                      ? Icon(
-                          Icons.check_circle,
-                          color: Theme.of(context).colorScheme.primary,
-                        )
-                      : null,
-                  onTap: () {
-                    viewModel.updateThemeMode(option.$2);
-                    Navigator.pop(context);
-                  },
-                );
-              }),
-              const SizedBox(height: AppTheme.spacingMedium),
-            ],
-          ),
-        );
-      },
     );
   }
 

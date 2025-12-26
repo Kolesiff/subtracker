@@ -8,10 +8,14 @@ import '../../../data/repositories/repositories.dart';
 /// Manages trial data with real-time stream updates
 class TrialViewModel extends ChangeNotifier {
   final TrialRepository _repository;
+  final NotificationRepository? _notificationRepository;
   StreamSubscription<List<Trial>>? _trialsSubscription;
 
-  TrialViewModel({required TrialRepository repository})
-      : _repository = repository {
+  TrialViewModel({
+    required TrialRepository repository,
+    NotificationRepository? notificationRepository,
+  })  : _repository = repository,
+        _notificationRepository = notificationRepository {
     _initRealTimeUpdates();
   }
 
@@ -45,6 +49,8 @@ class TrialViewModel extends ChangeNotifier {
   String? _error;
   String _selectedCategory = 'All';
   String _selectedTimeframe = 'All';
+  String _searchQuery = '';
+  bool _isSearchActive = false;
 
   // Getters for state
   List<Trial> get trials => _trials;
@@ -53,14 +59,16 @@ class TrialViewModel extends ChangeNotifier {
   String? get error => _error;
   String get selectedCategory => _selectedCategory;
   String get selectedTimeframe => _selectedTimeframe;
+  String get searchQuery => _searchQuery;
+  bool get isSearchActive => _isSearchActive;
   bool get hasTrials => _trials.isNotEmpty;
 
   /// Active (non-expired) trials
   List<Trial> get activeTrials => _trials.where((t) => !t.isExpired).toList();
 
-  /// Filtered trials based on selected filters
+  /// Filtered trials based on selected filters and search query
   List<Trial> get filteredTrials {
-    return activeTrials.where((trial) {
+    var filtered = activeTrials.where((trial) {
       final categoryMatch = _selectedCategory == 'All' ||
           trial.category.displayName == _selectedCategory;
 
@@ -73,8 +81,18 @@ class TrialViewModel extends ChangeNotifier {
       }
 
       return categoryMatch && timeframeMatch;
-    }).toList()
-      ..sort((a, b) => a.trialEndDate.compareTo(b.trialEndDate));
+    }).toList();
+
+    // Apply search filter
+    if (_searchQuery.isNotEmpty) {
+      final lowerQuery = _searchQuery.toLowerCase();
+      filtered = filtered.where((trial) {
+        return trial.serviceName.toLowerCase().contains(lowerQuery) ||
+            trial.category.displayName.toLowerCase().contains(lowerQuery);
+      }).toList();
+    }
+
+    return filtered..sort((a, b) => a.trialEndDate.compareTo(b.trialEndDate));
   }
 
   /// Trials sorted by urgency (closest to expiry first)
@@ -139,6 +157,8 @@ class TrialViewModel extends ChangeNotifier {
   Future<void> addTrial(Trial trial) async {
     try {
       await _repository.addTrial(trial);
+      // Schedule notifications for this trial
+      await _notificationRepository?.scheduleTrialReminders(trial);
       // Real-time stream will update the list
     } catch (e) {
       _error = 'Failed to add trial: ${e.toString()}';
@@ -151,6 +171,9 @@ class TrialViewModel extends ChangeNotifier {
   Future<void> updateTrial(Trial trial) async {
     try {
       await _repository.updateTrial(trial);
+      // Reschedule notifications (cancel old, schedule new)
+      await _notificationRepository?.cancelTrialReminders(trial.id);
+      await _notificationRepository?.scheduleTrialReminders(trial);
       // Real-time stream will update the list
     } catch (e) {
       _error = 'Failed to update trial: ${e.toString()}';
@@ -163,6 +186,8 @@ class TrialViewModel extends ChangeNotifier {
   Future<void> cancelTrial(String id) async {
     try {
       await _repository.cancelTrial(id);
+      // Cancel notifications for this trial
+      await _notificationRepository?.cancelTrialReminders(id);
       // Real-time stream will update the list
     } catch (e) {
       _error = 'Failed to cancel trial: ${e.toString()}';
@@ -175,6 +200,8 @@ class TrialViewModel extends ChangeNotifier {
   Future<void> deleteTrial(String id) async {
     try {
       await _repository.deleteTrial(id);
+      // Cancel notifications for this trial
+      await _notificationRepository?.cancelTrialReminders(id);
       // Real-time stream will update the list
     } catch (e) {
       _error = 'Failed to delete trial: ${e.toString()}';
@@ -192,6 +219,28 @@ class TrialViewModel extends ChangeNotifier {
   /// Set timeframe filter
   void setTimeframe(String timeframe) {
     _selectedTimeframe = timeframe;
+    notifyListeners();
+  }
+
+  /// Toggle search mode
+  void toggleSearch() {
+    _isSearchActive = !_isSearchActive;
+    if (!_isSearchActive) {
+      _searchQuery = '';
+    }
+    notifyListeners();
+  }
+
+  /// Update search query
+  void setSearchQuery(String query) {
+    _searchQuery = query;
+    notifyListeners();
+  }
+
+  /// Clear search
+  void clearSearch() {
+    _searchQuery = '';
+    _isSearchActive = false;
     notifyListeners();
   }
 

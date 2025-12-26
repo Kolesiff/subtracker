@@ -55,7 +55,7 @@ class SimpleTestSettingsRepository implements SettingsRepository {
 
 void main() {
   group('AppPreferencesWidget', () {
-    testWidgets('displays theme selection tile', (tester) async {
+    testWidgets('does NOT display theme selection tile (removed)', (tester) async {
       final repository = SimpleTestSettingsRepository();
       final viewModel = AccountSettingsViewModel(repository: repository);
       await viewModel.loadSettings();
@@ -70,8 +70,9 @@ void main() {
         ),
       );
 
-      expect(find.text('Theme'), findsOneWidget);
-      expect(find.byIcon(Icons.palette_outlined), findsOneWidget);
+      // Theme tile should NOT be present (feature removed)
+      expect(find.text('Theme'), findsNothing);
+      expect(find.byIcon(Icons.palette_outlined), findsNothing);
 
       viewModel.dispose();
     });
@@ -93,35 +94,6 @@ void main() {
 
       expect(find.text('Currency'), findsOneWidget);
       expect(find.byIcon(Icons.attach_money), findsOneWidget);
-
-      viewModel.dispose();
-    });
-
-    testWidgets('shows current theme mode', (tester) async {
-      final settings = UserSettings(
-        id: 'id',
-        userId: 'test-user',
-        themeMode: ThemeMode.dark,
-        notificationsEnabled: true,
-        currency: 'USD',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-      final repository = SimpleTestSettingsRepository(initialSettings: settings);
-      final viewModel = AccountSettingsViewModel(repository: repository);
-      await viewModel.loadSettings();
-
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.lightTheme,
-          home: ChangeNotifierProvider<AccountSettingsViewModel>.value(
-            value: viewModel,
-            child: const Scaffold(body: SingleChildScrollView(child: AppPreferencesWidget())),
-          ),
-        ),
-      );
-
-      expect(find.text('Dark'), findsOneWidget);
 
       viewModel.dispose();
     });
@@ -151,62 +123,6 @@ void main() {
       );
 
       expect(find.text('EUR'), findsOneWidget);
-
-      viewModel.dispose();
-    });
-
-    testWidgets('tapping theme opens bottom sheet', (tester) async {
-      final repository = SimpleTestSettingsRepository();
-      final viewModel = AccountSettingsViewModel(repository: repository);
-      await viewModel.loadSettings();
-
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.lightTheme,
-          home: ChangeNotifierProvider<AccountSettingsViewModel>.value(
-            value: viewModel,
-            child: const Scaffold(body: SingleChildScrollView(child: AppPreferencesWidget())),
-          ),
-        ),
-      );
-
-      // Tap on theme tile
-      await tester.tap(find.text('Theme'));
-      await tester.pumpAndSettle();
-
-      // Bottom sheet should show options
-      expect(find.text('Select Theme'), findsOneWidget);
-      expect(find.text('Light'), findsOneWidget);
-      expect(find.text('Dark'), findsOneWidget);
-      expect(find.text('System'), findsWidgets);
-
-      viewModel.dispose();
-    });
-
-    testWidgets('selecting theme updates viewModel', (tester) async {
-      final repository = SimpleTestSettingsRepository();
-      final viewModel = AccountSettingsViewModel(repository: repository);
-      await viewModel.loadSettings();
-
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.lightTheme,
-          home: ChangeNotifierProvider<AccountSettingsViewModel>.value(
-            value: viewModel,
-            child: const Scaffold(body: SingleChildScrollView(child: AppPreferencesWidget())),
-          ),
-        ),
-      );
-
-      // Tap on theme tile
-      await tester.tap(find.text('Theme'));
-      await tester.pumpAndSettle();
-
-      // Select Dark theme
-      await tester.tap(find.text('Dark'));
-      await tester.pumpAndSettle();
-
-      expect(viewModel.currentThemeMode, ThemeMode.dark);
 
       viewModel.dispose();
     });

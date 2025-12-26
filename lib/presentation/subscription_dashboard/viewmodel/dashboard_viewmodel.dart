@@ -8,10 +8,14 @@ import '../../../data/repositories/repositories.dart';
 /// Manages subscription data, filtering, and computed statistics
 class DashboardViewModel extends ChangeNotifier {
   final SubscriptionRepository _repository;
+  final NotificationRepository? _notificationRepository;
   StreamSubscription<List<Subscription>>? _subscriptionsSubscription;
 
-  DashboardViewModel({required SubscriptionRepository repository})
-      : _repository = repository {
+  DashboardViewModel({
+    required SubscriptionRepository repository,
+    NotificationRepository? notificationRepository,
+  })  : _repository = repository,
+        _notificationRepository = notificationRepository {
     _initRealTimeUpdates();
   }
 
@@ -139,6 +143,8 @@ class DashboardViewModel extends ChangeNotifier {
   Future<void> addSubscription(Subscription subscription) async {
     try {
       await _repository.addSubscription(subscription);
+      // Schedule notification reminders for this subscription
+      await _notificationRepository?.scheduleSubscriptionReminders(subscription);
       _subscriptions = await _repository.getSubscriptions();
       notifyListeners();
     } catch (e) {
@@ -151,6 +157,9 @@ class DashboardViewModel extends ChangeNotifier {
   Future<void> updateSubscription(Subscription subscription) async {
     try {
       await _repository.updateSubscription(subscription);
+      // Reschedule notifications (cancel old, schedule new)
+      await _notificationRepository?.cancelSubscriptionReminders(subscription.id);
+      await _notificationRepository?.scheduleSubscriptionReminders(subscription);
       _subscriptions = await _repository.getSubscriptions();
       notifyListeners();
     } catch (e) {
@@ -163,6 +172,8 @@ class DashboardViewModel extends ChangeNotifier {
   Future<void> deleteSubscription(String id) async {
     try {
       await _repository.deleteSubscription(id);
+      // Cancel notifications for this subscription
+      await _notificationRepository?.cancelSubscriptionReminders(id);
       _subscriptions = await _repository.getSubscriptions();
       notifyListeners();
     } catch (e) {

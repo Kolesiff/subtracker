@@ -341,7 +341,9 @@ Navigator.pushNamed(
 
 **Input Methods:** Manual and Popular (Scan feature removed)
 
-**Popular Services:** 45 pre-configured services with Google Play Store icons:
+**Logo URLs:** Using Unavatar.io (`https://unavatar.io/{domain}`) - free, no auth required.
+
+**Popular Services:** 45 pre-configured services:
 - Entertainment: Netflix, Spotify, Disney+, Max, YouTube, Apple Music, Amazon Prime, Hulu, Peacock, Paramount+, Crunchyroll, Twitch, Discord Nitro, PlayStation, Xbox Game Pass
 - Productivity: Microsoft 365, Notion, Slack, Zoom, Canva, Evernote, Google One, Dropbox, OneDrive, 1Password, NordVPN, ExpressVPN
 - Health: Headspace, Calm, Strava, MyFitnessPal, Fitbit Premium
@@ -366,14 +368,21 @@ Navigator.pushNamed(
 
 **Status:** 100% complete. Fully integrated with TrialViewModel and real-time streams.
 
+**Popular Trials Quick Add:** Same Manual/Popular tab pattern as Add Subscription with 45 services.
+
 **Key Files:**
 - `lib/presentation/trial_tracker/viewmodel/trial_viewmodel.dart` - ViewModel with streams
-- `lib/presentation/add_trial/add_trial.dart` - Add Trial form screen
-- `lib/presentation/trial_tracker/trial_tracker.dart` - Main screen using `Consumer<TrialViewModel>`
+- `lib/presentation/add_trial/add_trial.dart` - Add Trial form with Popular tab
+- `lib/presentation/add_trial/widgets/trial_input_method_selector.dart` - Manual/Popular toggle
+- `lib/presentation/add_trial/widgets/popular_trials_grid_widget.dart` - Popular trials grid
+- `lib/presentation/add_trial/widgets/trial_duration_selector.dart` - 7 Days / 30 Days / Custom selector
+- `lib/data/constants/popular_trials.dart` - 45 services with trial metadata
+
+**Logo URLs:** Using Unavatar.io (`https://unavatar.io/{domain}`) - free, no auth required.
 
 **How it works:**
 - Uses `Consumer<TrialViewModel>` to display real user trials (no mock data)
-- `_trialToMap()` converts Trial models to Maps for widget compatibility
+- Popular tab auto-fills form when selecting a service (switches to Manual for editing)
 - Filter chips use `viewModel.setCategory()` and `viewModel.setTimeframe()`
 - Cancel actions call `viewModel.cancelTrial(id)` - UI updates via real-time stream
 
@@ -447,10 +456,138 @@ CREATE POLICY "Users can delete own billing history" ON billing_history
 
 ---
 
+## Recent Changes (2025-12-25)
+
+### Logo API Migration: Clearbit → Unavatar.io
+Clearbit Logo API was shut down (December 2025). Migrated to Unavatar.io:
+- **URL format:** `https://unavatar.io/{domain}` (free, no auth required)
+- **Files updated:**
+  - `lib/data/constants/popular_trials.dart` - 45 service logos
+  - `lib/presentation/add_subscription/add_subscription.dart` - 45 service logos
+
+### Dashboard Stats Card: Trial Count Fix
+The dashboard stats card now shows actual Trial entities (not subscription records with trial status):
+- **File:** `lib/presentation/subscription_dashboard/subscription_dashboard.dart`
+- **Change:** `SpendingSummaryWidget` now wrapped with `Consumer<TrialViewModel>` to read `trialViewModel.activeTrials.length`
+- **Previous behavior:** Counted `Subscription` records with `status == trial`
+- **New behavior:** Counts actual `Trial` entities from trials table
+
+### App Polish (Phase 1-4)
+Implemented comprehensive UI/UX polish based on `docs/plans/2025-12-25-app-polish-plan.md`:
+
+**Phase 4 - Auth & Trial UX:**
+- **Apple Login Removed:** Simplified `SocialLoginWidget` to only show Google button. Changed callback from `onSocialLogin(String)` to `onGoogleLogin(VoidCallback)`.
+- **Trial Duration Selector:** Replaced Trial End Date picker and Cancellation Difficulty with new `TrialDurationSelector` widget offering 7 Days / 30 Days / Custom options.
+- **Popular Trials Grid:** Removed duration badges - user now selects duration in the form instead.
+
+**Visual Polish:**
+- **Urgency Icons:** Fixed broken IconData→String conversion in `UrgencySummaryWidget` - now uses string icon names directly (`'warning_rounded'`, `'access_time_rounded'`, `'check_circle_rounded'`)
+- **Skeleton Loading:** Added `shimmer: ^3.0.0` package and `lib/widgets/skeleton_loader.dart` with `SkeletonDashboard`, `SkeletonTrialTracker`, `SkeletonAnalyticsScreen` widgets
+- **FAB Colors:** Standardized Trial Tracker FAB to use primary (blue) instead of tertiary (orange)
+- **Currency Formatting:** Fixed yearly spending to show 2 decimals (`$335.76` not `$336`)
+
+**UX Improvements:**
+- **Save Button:** Increased disabled opacity from 0.4 to 0.5 for better visibility
+- **Analytics Empty State:** Added hint message when only 1 category exists ("Add subscriptions in different categories...")
+- **Undo Deletions:** Subscription cancel now has 3-second delay with working Undo button via `_handleSubscriptionCancel()` in Dashboard
+
+**Features:**
+- **Trial Search:** Added `toggleSearch()`, `setSearchQuery()`, `clearSearch()` to `TrialViewModel` with search filtering in `filteredTrials` getter. UI shows search app bar when active.
+- **Screen Transitions:** Added `RouteTransition` enum and `_createRoute()` in `app_routes.dart` with fade (tab switches), slideRight (detail views), slideUp (add forms) animations
+
+**Files Modified:**
+- `lib/presentation/trial_tracker/widgets/urgency_summary_widget.dart`
+- `lib/presentation/trial_tracker/trial_tracker.dart`
+- `lib/presentation/trial_tracker/viewmodel/trial_viewmodel.dart`
+- `lib/presentation/subscription_dashboard/subscription_dashboard.dart`
+- `lib/presentation/subscription_dashboard/widgets/subscription_card_widget.dart`
+- `lib/presentation/analytics/analytics_screen.dart`
+- `lib/presentation/analytics/viewmodel/analytics_viewmodel.dart`
+- `lib/presentation/add_subscription/add_subscription.dart`
+- `lib/presentation/add_trial/add_trial.dart`
+- `lib/presentation/add_trial/widgets/popular_trials_grid_widget.dart`
+- `lib/presentation/add_trial/widgets/trial_duration_selector.dart` (NEW)
+- `lib/presentation/login_screen/widgets/social_login_widget.dart`
+- `lib/presentation/login_screen/login_screen.dart`
+- `lib/routes/app_routes.dart`
+- `lib/widgets/skeleton_loader.dart` (NEW)
+- `pubspec.yaml` (added shimmer)
+
+**Files Deleted:**
+- `lib/presentation/add_trial/widgets/trial_duration_badge.dart`
+
+### Push Notifications Implementation (2025-12-25)
+
+**Status:** 100% complete. Local notifications for trial and subscription reminders.
+
+**Theme Removal:**
+- Removed theme switching functionality from Account Settings
+- App now uses `ThemeMode.system` (follows device setting)
+- Removed `Consumer<AccountSettingsViewModel>` wrapper from main.dart
+- Removed theme tile from AppPreferencesWidget (currency selector remains)
+
+**Notification Schedule:**
+- **Trial reminders:** 7 days, 3 days, 1 day before expiration
+- **Subscription reminders:** 3 days before billing date
+- Background notifications work when app is closed
+
+**New Files:**
+- `lib/data/services/notification_service.dart` - Core notification scheduling
+- `lib/data/services/background_worker.dart` - WorkManager for daily sync
+- `lib/data/repositories/notification_repository.dart` - High-level API
+
+**Architecture:**
+```
+NotificationService          → flutter_local_notifications (display)
+NotificationRepository       → High-level API for scheduling
+BackgroundWorker            → WorkManager (daily sync task)
+ViewModels                  → Trigger scheduling on CRUD
+NotificationToggleWidget    → Enable/disable + permission request
+```
+
+**Dependencies Added:**
+- `flutter_local_notifications: ^18.0.1`
+- `workmanager: ^0.9.0`
+- `timezone: ^0.9.4`
+
+**Android Permissions Added (AndroidManifest.xml):**
+- `RECEIVE_BOOT_COMPLETED`
+- `VIBRATE`
+- `POST_NOTIFICATIONS` (Android 13+)
+- `SCHEDULE_EXACT_ALARM`
+- `USE_EXACT_ALARM`
+
+**Using Notifications:**
+```dart
+// Schedule trial reminders (automatic on addTrial)
+await notificationRepository.scheduleTrialReminders(trial);
+
+// Schedule subscription reminders (automatic on addSubscription)
+await notificationRepository.scheduleSubscriptionReminders(subscription);
+
+// Cancel all notifications
+await notificationRepository.cancelAllNotifications();
+
+// Reschedule all notifications
+await notificationRepository.rescheduleAllNotifications(
+  trials: trialViewModel.activeTrials,
+  subscriptions: dashboardViewModel.filteredSubscriptions,
+);
+```
+
+**How Toggle Works:**
+1. User enables toggle → Request permissions
+2. If granted → Reschedule all notifications with current data
+3. If denied → Revert toggle, show system settings message
+4. User disables toggle → Cancel all notifications
+
+---
+
 ## Remaining Backlog
 
 1. **Sizer percentage usage** - Some files use `.h`/`.w` for spacing. Intentional for responsive design.
 2. **Pre-existing lint warnings** - ~25 lint issues exist. Run `flutter analyze` to see details.
-3. **Pre-existing test failures** - 7 tests fail (CustomBottomBar/CustomAppBar related). Not related to app logic.
+3. **Pre-existing test failures** - 7 tests fail (CustomBottomBar/CustomAppBar related, analytics mock repos). Not related to app logic.
 4. **HistoryTabWidget** - Needs to call `BillingHistoryRepository` to display real billing records.
 5. **Supabase `brand_color` column** - Must be TEXT type (not INTEGER) to store hex color strings.
+6. **Test suite** - 327 passing tests (as of Phase 4 completion).
