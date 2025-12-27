@@ -2,6 +2,12 @@
 .env
 .env.*
 
+# Release signing (NEVER commit these)
+*.jks
+*.keystore
+keystore.properties
+android/keystore.properties
+
 # Miscellaneous
 *.class
 *.log
